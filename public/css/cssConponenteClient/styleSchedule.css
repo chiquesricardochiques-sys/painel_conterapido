@@ -1,0 +1,379 @@
+:root {
+    --bg-color: #050505;
+    --card-bg: rgba(31, 40, 51, 0.9);
+    --neon-blue: #66fcf1;
+    --text-primary: #e0e0e0;
+    --input-bg: #1f2833;
+    --danger-red: #ff3b3b;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bg-color);
+    background-image: radial-gradient(circle at top right, #1a1a2e 0%, #000000 70%);
+    color: var(--text-primary);
+    padding: 15px;
+    margin: 0;
+    min-height: 100vh;
+}
+
+.agendamento-form {
+    max-width: 500px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+}
+
+h2 {
+    text-align: center;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 1.3rem;
+    margin-bottom: 25px;
+    text-shadow: 0 0 10px rgba(102, 252, 241, 0.3);
+}
+
+/* Estilo dos Passos (Stepper) */
+.step-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 25px 0 12px;
+    color: var(--neon-blue);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.step-number {
+    background: var(--neon-blue);
+    color: #000;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* Estilização dos checkboxes empilhados */
+.servicos-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Aumentei um pouco o gap para não grudar */
+    margin-top: 10px;
+}
+
+.servico-check {
+    display: flex; /* Mudado para flex para alinhar melhor o checkbox com o texto */
+    align-items: center;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.servico-check:hover {
+    background: rgba(102, 252, 241, 0.05);
+}
+
+/* Estilização básica do input checkbox (opcional, se quiser esconder o nativo) */
+.servico-checkbox {
+    appearance: none; /* Esconde o checkbox padrão */
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--neon-blue);
+    border-radius: 4px;
+    margin-right: 10px;
+    position: relative;
+    cursor: pointer;
+    background: var(--input-bg);
+}
+
+/* O "visto" do checkbox quando marcado */
+.servico-checkbox::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 0px;
+    width: 5px;
+    height: 10px;
+    border: solid #000;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    display: none; /* Escondido por padrão */
+}
+
+.servico-checkbox:checked {
+    background: var(--neon-blue);
+    border-color: var(--neon-blue);
+}
+
+.servico-checkbox:checked::after {
+    display: block; /* Mostra o visto quando marcado */
+}
+
+.servico-check span {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+/* Inputs e Selects Modernos */
+select, input[type="date"], textarea {
+    width: 100%;
+    padding: 14px;
+    background-color: var(--input-bg);
+    border: 1px solid rgba(102, 252, 241, 0.2);
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    outline: none;
+    transition: 0.3s;
+    appearance: none;
+}
+
+select:focus, input[type="date"]:focus, textarea:focus {
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 12px rgba(102, 252, 241, 0.2);
+}
+
+/* Wrapper do Input de Data para o Ícone */
+.date-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.date-wrapper i {
+    position: absolute;
+    left: 15px;
+    color: var(--neon-blue);
+    pointer-events: none;
+}
+
+input[type="date"] {
+    padding-left: 45px;
+}
+
+/* ===========================
+   Grade de Horários (Radio Buttons Estilizados)
+=========================== */
+#horariosGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 5px;
+}
+
+/* O label agora é o card clicável */
+.horario-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 12px 5px;
+    border-radius: 12px;
+    text-align: center;
+    transition: all 0.3s ease; /* suavizar todas as transições */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 80px;
+    cursor: pointer;
+    position: relative; /* Para posicionar o input escondido dentro */
+}
+
+/* Efeito Hover nos cards disponíveis */
+.horario-card.disponivel:hover {
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 15px rgba(102, 252, 241, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Esconder o radio button nativo */
+.horario-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* ESTILO DO CARD QUANDO SELECIONADO (checked) */
+.horario-card input[type="radio"]:checked + span {
+    /* O span .time é filho do label. Quando o input está checked, alteramos o filho */
+    color: #000; /* Muda a cor do texto para preto */
+}
+
+.horario-card input[type="radio"]:checked {
+    /* Isso seleciona o próprio label (o card) através do seletor :has,
+       se o navegador do seu cliente for muito antigo, pode não funcionar,
+       mas é o padrão moderno. Se não funcionar, precisaremos de um pequeno JS.
+       Assumindo navegadores modernos: */
+}
+/* Se o navegador suportar :has (Chrome 105+, Safari 15.4+, Firefox 121+) */
+.horario-card:has(input[type="radio"]:checked) {
+    background: var(--neon-blue);
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 20px rgba(102, 252, 241, 0.5);
+}
+/* Fallback para navegadores sem :has (caso o FF seja antigo, adicione essa classe via JS no click)
+.horario-card.card-selecionado {
+    background: var(--neon-blue);
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 20px rgba(102, 252, 241, 0.5);
+}
+*/
+
+.horario-card.disponivel {
+    border-bottom: 3px solid var(--neon-blue);
+}
+
+.horario-card.indisponivel {
+    opacity: 0.3;
+    filter: grayscale(1);
+    cursor: not-allowed;
+    border-bottom: 1px solid rgba(255,255,255,0.05); /* Remove o neon debaixo */
+}
+
+.horario-card .time {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+    transition: color 0.3s ease; /* Transição suave da cor do texto */
+}
+
+.horario-card .status {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--neon-blue);
+    margin-bottom: 5px;
+    transition: color 0.3s ease;
+}
+/* Ajuste de cor do status quando o card está selecionado */
+.horario-card input[type="radio"]:checked ~ .status {
+    color: rgba(0, 0, 0, 0.7);
+}
+
+
+/* Botão Principal de Agendar (agora único) */
+.btn-agendar {
+    background: var(--neon-blue);
+    color: #000;
+    border: none;
+    padding: 15px; /* Aumentei o padding para ficar mais confortável */
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 1rem;
+    width: 100%;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 20px;
+    transition: 0.3s;
+}
+
+.btn-agendar:hover {
+    box-shadow: 0 0 20px rgba(102, 252, 241, 0.4);
+}
+
+/* Desabilitar botão se estiver carregando (via JS) */
+.btn-agendar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.loader {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 30px;
+    color: var(--neon-blue);
+    font-size: 0.9rem;
+}
+
+/* Estilo para avisos */
+.empty-notice {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-size: 0.85rem;
+    border: 1px dashed #333;
+    border-radius: 10px;
+}
+
+/* ===========================
+   Versão Desktop / Telas Grandes
+=========================== */
+@media screen and (min-width: 768px) {
+    body {
+        padding: 40px;
+        background-image: radial-gradient(circle at top right, #1a1a2e 0%, #000000 100%);
+    }
+
+    .agendamento-form {
+        max-width: 700px;
+        padding: 30px;
+        margin: 0 auto;
+    }
+
+    h2 {
+        font-size: 2rem;
+        margin-bottom: 35px;
+    }
+
+    .step-header {
+        font-size: 1rem;
+        margin: 30px 0 15px;
+        gap: 15px;
+    }
+
+    .step-number {
+        width: 30px;
+        height: 30px;
+        font-size: 0.9rem;
+    }
+
+    select, input[type="date"], textarea {
+        font-size: 1.1rem;
+        padding: 16px;
+    }
+
+    input[type="date"] {
+        padding-left: 50px;
+    }
+
+    #horariosGrid {
+        grid-template-columns: repeat(4, 1fr); /* Mais colunas no desktop */
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .horario-card {
+        padding: 18px 10px;
+        min-height: 100px;
+    }
+
+    .horario-card .time {
+        font-size: 1.25rem;
+    }
+
+    .horario-card .status {
+        font-size: 0.75rem;
+        margin-bottom: 8px;
+    }
+
+    .btn-agendar {
+        padding: 18px;
+        font-size: 1.1rem;
+    }
+
+    .loader, .empty-notice {
+        font-size: 1rem;
+        padding: 30px;
+    }
+}

@@ -1,0 +1,78 @@
+<div class="container">
+    <h1>Administradores</h1>
+
+    {{#if query.sucesso}}
+        <div class="alert success">
+            {{#if (eq query.sucesso "criado")}}Admin criado com sucesso{{/if}}
+            {{#if (eq query.sucesso "update")}}Admin atualizado{{/if}}
+            {{#if (eq query.sucesso "senha")}}Senha atualizada{{/if}}
+            {{#if (eq query.sucesso "delete")}}Admin removido{{/if}}
+        </div>
+    {{/if}}
+    {{#if query.erro}}
+        <div class="alert error">
+            {{#if (eq query.erro "email")}}Email já existe{{/if}}
+            {{#if (eq query.erro "self")}}Você não pode se deletar{{/if}}
+            {{#if (eq query.erro "ultimo")}}Não pode deletar o último admin{{/if}}
+            {{#if (eq query.erro "senha")}}Senha inválida{{/if}}
+            {{#if (eq query.erro "campos")}}Preencha todos os campos{{/if}}
+        </div>
+    {{/if}}
+
+    <!-- 🔹 CRIAR ADMIN -->
+    <section class="card">
+        <h2>Novo administrador</h2>
+
+        <form method="POST" action="/admin/admins/create" class="form-card">
+            <input type="text" name="nome" placeholder="Nome" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="senha" placeholder="Senha (mín. 6)" required>
+            <button class="btn primary">Criar admin</button>
+        </form>
+    </section>
+
+    <!-- 🔹 LISTA -->
+    <section class="card">
+        <h2>Admins cadastrados</h2>
+
+        <div class="admin-list">
+            {{#each admins}}
+            <div class="admin-item">
+                <div class="admin-info">
+                    <strong>{{this.nome}}</strong>
+                    <span>{{this.email}}</span>
+                    <span class="created">{{this.criado_em}}</span>
+                </div>
+
+                <div class="admin-actions">
+                    <!-- EDITAR -->
+                    <form method="POST" action="/admin/admins/update" class="form-inline">
+                        <input type="hidden" name="id" value="{{this.id}}">
+                        <input type="text" name="nome" value="{{this.nome}}" required>
+                        <input type="email" name="email" value="{{this.email}}" required>
+                        <button class="btn small">Salvar</button>
+                    </form>
+
+                    <!-- SENHA -->
+                    <form method="POST" action="/admin/admins/update-password" class="form-inline">
+                        <input type="hidden" name="id" value="{{this.id}}">
+                        <input type="password" name="senha" placeholder="Nova senha" required>
+                        <button class="btn small warning">Senha</button>
+                    </form>
+
+                    <!-- DELETAR -->
+                    {{#if (neq ../adminLogado.id this.id)}}
+                        <a href="/admin/admins/delete/{{this.id}}" 
+                           class="btn small danger" 
+                           onclick="return confirm('Deseja deletar este admin?')">
+                            Deletar
+                        </a>
+                    {{else}}
+                        <span class="badge">Você</span>
+                    {{/if}}
+                </div>
+            </div>
+            {{/each}}
+        </div>
+    </section>
+</div>

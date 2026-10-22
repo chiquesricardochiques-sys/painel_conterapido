@@ -1,0 +1,56 @@
+src/views/admin/manageSiteTexts.handlebars
+{{!-- tela onde coloca as img e altera outras informasois --}}
+<div class="container">
+    <article>
+        <h1>Interface do Site</h1>
+        <p>
+
+            <div class="subtitle">Personalização de Textos Globais</div>
+        </p>
+    </article>
+
+    {{#each campos}}
+    <div class="config-node">
+        <form action="{{#if (eq this.type 'file')}}/admin/site-texts/upload{{else}}/admin/site-texts{{/if}}" method="POST" {{#if (eq this.type 'file')}}enctype="multipart/form-data"{{/if}}>
+            <div class="config-label">
+                <i data-lucide="layout-template" style="width:14px"></i> {{this.label}}
+            </div>
+            <div class="input-wrapper">
+                {{#if (eq this.type 'text')}}
+                    <input type="text" name="value" value="{{lookup ../textos this.key}}">
+                {{else if (eq this.type 'file')}}
+                    <input type="file" name="file">
+                    <input type="hidden" name="imgAntiga" value="{{lookup ../textos this.key}}">
+                {{/if}}
+                <input type="hidden" name="key_name" value="{{this.key}}">
+                <button type="submit" class="btn-update">
+                    <i data-lucide="refresh-cw" style="width:16px"></i> Atualizar
+                </button>
+            </div>
+
+            {{#if (eq this.type 'file')}}
+                {{#if (lookup ../textos this.key)}}
+                <div class="banner-preview">
+                    <span class="preview-title">Imagem atual</span>
+
+                    <div class="banner-image">
+                        <img 
+                            src="{{lookup ../textos this.key}}" 
+                            alt="{{this.label}}"
+                        >
+                    </div>
+                </div>
+                {{/if}}
+            {{/if}}
+        </form>
+    </div>
+    {{/each}}
+
+    <div class="status-footer">
+        <span class="live-indicator"></span> Sincronizado com o Banco de Dados em tempo real
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+</script>

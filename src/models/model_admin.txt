@@ -1,0 +1,1682 @@
+olha eses model aki en bacho e aversao de cada model que eu to te mandando mais eses sao se o site estivese rodando junto com o node mais o site esta separado en servidor diferente eles van se conectar atrabeis de x-api-key
+
+
+
+/**
+ * ====================================================
+ * MODEL - ADMINISTRADORES (USANDO API GO)
+ * ====================================================
+ */
+
+const bcrypt = require('bcrypt');
+const apiClient = require('../services/apiClient.service.js');
+const advancedApiClient = require('../services/advancedApiClient.service.js');
+const { getProjectContext } = require('../config/project.config.js');
+
+const SALT_ROUNDS = 10;
+const TABLE_NAME = 'admin';
+
+/**
+ * Validar login do administrador
+ * Query original: SELECT * FROM admin WHERE email = ?
+ */
+async function validarLogin(email, senha) {
+  const ctx = getProjectContext();
+  
+  // Buscar admin pelo email na instância
+  const result = await apiClient.get(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    { email }
+  );
+  
+  if (!result || result.length === 0) return null;
+  
+  const admin = result[0];
+  
+  // Validar senha
+  const senhaValida = await bcrypt.compare(senha, admin.senha_hash);
+  if (!senhaValida) return null;
+  
+  return admin;
+}
+
+/**
+ * Atualizar dados do admin
+ * Query original: UPDATE admin SET nome = ?, email = ? WHERE id = ?
+ */
+async function atualizarAdmin(id, nome, email) {
+  const ctx = getProjectContext();
+  
+  return apiClient.update(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    id,
+    { nome, email }
+  );
+}
+
+/**
+ * Atualizar senha do admin
+ * Query original: UPDATE admin SET senha_hash = ? WHERE id = ?
+ */
+async function atualizarSenha(id, novaSenha) {
+  const ctx = getProjectContext();
+  const senha_hash = await bcrypt.hash(novaSenha, SALT_ROUNDS);
+  
+  return apiClient.update(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    id,
+    { senha_hash }
+  );
+}
+
+/**
+ * Deletar admin
+ * Query original: DELETE FROM admin WHERE id = ?
+ */
+async function deletarAdmin(id) {
+  const ctx = getProjectContext();
+  
+  return apiClient.delete(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    id
+  );
+}
+
+/**
+ * Contar total de admins da instância
+ * Query original: SELECT COUNT(*) total FROM admin
+ */
+async function contarAdmins() {
+  const ctx = getProjectContext();
+  
+  const result = await advancedApiClient.advancedSelect({
+    project_id: ctx.project_id,
+    id_instancia: ctx.id_instancia,
+    table: TABLE_NAME,
+    select: ['COUNT(*) as total']
+  });
+  
+  return result[0]?.total || 0;
+}
+
+/**
+ * Criar novo admin
+ * Query original: INSERT INTO admin (nome, email, senha_hash) VALUES (?, ?, ?)
+ */
+async function criarAdmin(nome, email, senha) {
+  const ctx = getProjectContext();
+  const senha_hash = await bcrypt.hash(senha, SALT_ROUNDS);
+  
+  return apiClient.insert(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    { nome, email, senha_hash }
+  );
+}
+
+/**
+ * Listar todos os admins da instância
+ * Query original: SELECT id, nome, email, criado_em FROM admin ORDER BY criado_em DESC
+ */
+async function listarAdmins() {
+  const ctx = getProjectContext();
+  
+  return advancedApiClient.advancedSelect({
+    project_id: ctx.project_id,
+    id_instancia: ctx.id_instancia,
+    table: TABLE_NAME,
+    select: ['id', 'nome', 'email', 'criado_em'],
+    order_by: 'criado_em DESC'
+  });
+}
+
+module.exports = {
+  validarLogin,
+  atualizarAdmin,
+  atualizarSenha,
+  deletarAdmin,
+  contarAdmins,
+  criarAdmin,
+  listarAdmins,
+};
+
+
+------------------------------------------------------------------------
+/**
+ * ====================================================
+ * MODEL - CLIENTES (USANDO API GO)
+ * ====================================================
+ */
+
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const apiClient = require('../services/apiClient.service.js');
+const { getProjectContext } = require('../config/project.config.js');
+
+const SALT_ROUNDS = 10;
+const TABLE_NAME = 'clientes';
+
+/**
+ * Criar novo cliente
+ * Query original: INSERT INTO clientes (nome, email, telefone, senha_hash) VALUES (?, ?, ?, ?)
+ */
+async function criarCliente(nome, email, telefone, senha) {
+  const ctx = getProjectContext();
+  const senha_hash = await bcrypt.hash(senha, SALT_ROUNDS);
+  
+  return apiClient.insert(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    { nome, email, telefone, senha_hash }
+  );
+}
+
+/**
+ * Buscar cliente pelo email (dentro da instância)
+ * Query original: SELECT * FROM clientes WHERE email = ?
+ */
+async function buscarClientePorEmail(email) {
+  const ctx = getProjectContext();
+  
+  const result = await apiClient.get(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    { email }
+  );
+  
+  return result && result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Validar login do cliente
+ */
+async function validarLogin(email, senha) {
+  const cliente = await buscarClientePorEmail(email);
+  
+  if (!cliente) return null;
+  
+  const senhaValida = await bcrypt.compare(senha, cliente.senha_hash);
+  if (!senhaValida) return null;
+  
+  return cliente;
+}
+
+/**
+ * Atualizar perfil do cliente
+ * Query original: UPDATE clientes SET nome = ?, email = ?, telefone = ?, senha_hash = ? WHERE id = ?
+ */
+async function atualizarPerfil(id, nome, email, telefone, senha) {
+  const ctx = getProjectContext();
+  
+  const data = { nome, email, telefone };
+  
+  // Se forneceu nova senha, criptografa
+  if (senha && senha.trim() !== '') {
+    data.senha_hash = await bcrypt.hash(senha, SALT_ROUNDS);
+  }
+  
+  return apiClient.update(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    id,
+    data
+  );
+}
+
+/**
+ * Gerar token de recuperação de senha
+ * Query original: UPDATE clientes SET reset_token = ?, reset_token_expira = ? WHERE email = ?
+ */
+async function salvarTokenRecuperacao(email) {
+  const ctx = getProjectContext();
+  const token = crypto.randomBytes(32).toString('hex');
+  const expira = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+  
+  // Buscar cliente
+  const cliente = await buscarClientePorEmail(email);
+  if (!cliente) throw new Error('Cliente não encontrado');
+  
+  // Atualizar com token
+  await apiClient.update(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    cliente.id,
+    {
+      reset_token: token,
+      reset_token_expira: expira.toISOString().slice(0, 19).replace('T', ' ')
+    }
+  );
+  
+  return token;
+}
+
+/**
+ * Buscar cliente pelo token de recuperação
+ * Query original: SELECT * FROM clientes WHERE reset_token = ? AND reset_token_expira > NOW()
+ */
+async function buscarPorToken(token) {
+  const ctx = getProjectContext();
+  
+  const result = await apiClient.get(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    { reset_token: token }
+  );
+  
+  if (!result || result.length === 0) return null;
+  
+  const cliente = result[0];
+  
+  // Verificar se o token ainda é válido
+  const agora = new Date();
+  const expira = new Date(cliente.reset_token_expira);
+  
+  if (agora > expira) return null;
+  
+  return cliente;
+}
+
+/**
+ * Atualizar senha do cliente
+ * Query original: UPDATE clientes SET senha_hash = ?, reset_token = NULL, reset_token_expira = NULL WHERE id = ?
+ */
+async function atualizarSenha(id, senha) {
+  const ctx = getProjectContext();
+  const senha_hash = await bcrypt.hash(senha, SALT_ROUNDS);
+  
+  return apiClient.update(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    id,
+    {
+      senha_hash,
+      reset_token: null,
+      reset_token_expira: null
+    }
+  );
+}
+
+module.exports = {
+  criarCliente,
+  buscarClientePorEmail,
+  validarLogin,
+  atualizarPerfil,
+  salvarTokenRecuperacao,
+  buscarPorToken,
+  atualizarSenha,
+};
+
+
+
+
+
+----------------------------------------------------------
+/**
+ * ====================================================
+ * MODEL - COMENTÁRIOS (USANDO API GO)
+ * ====================================================
+ */
+
+const apiClient = require('../services/apiClient.service.js');
+const advancedApiClient = require('../services/advancedApiClient.service.js');
+const { getProjectContext } = require('../config/project.config.js');
+
+const TABLE_NAME = 'comments';
+
+/**
+ * Listar comentários ativos (para clientes)
+ * Query original: SELECT * FROM comments WHERE ativo = 1
+ */
+async function listarComentarios() {
+  const ctx = getProjectContext();
+  
+  return apiClient.get(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    { ativo: 1 }
+  );
+}
+
+/**
+ * Listar todos os comentários (admin vê todos)
+ * Query original: SELECT * FROM comments
+ */
+async function listarTodosComentarios() {
+  const ctx = getProjectContext();
+  
+  return apiClient.get(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    {}
+  );
+}
+
+/**
+ * Criar novo comentário
+ * Query original: INSERT INTO comments (nome, comentario, img) VALUES (?, ?, ?)
+ */
+async function criarComentario(nome, comentario, img) {
+  const ctx = getProjectContext();
+  
+  return apiClient.insert(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    {
+      nome,
+      comentario,
+      img: img || '',
+      ativo: 1
+    }
+  );
+}
+
+/**
+ * Atualizar comentário
+ * Query original: UPDATE comments SET nome = ?, comentario = ?, img = ?, ativo = ? WHERE id = ?
+ */
+async function atualizarComentario(id, nome, comentario, img, ativo) {
+  const ctx = getProjectContext();
+  
+  return apiClient.update(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    id,
+    {
+      nome,
+      comentario,
+      img: img || '',
+      ativo: ativo ? 1 : 0
+    }
+  );
+}
+
+/**
+ * Deletar comentário
+ * Query original: DELETE FROM comments WHERE id = ?
+ */
+async function deletarComentario(id) {
+  const ctx = getProjectContext();
+  
+  return apiClient.delete(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    id
+  );
+}
+
+/**
+ * Listar comentários para home (últimos 5 ativos)
+ * Query original: SELECT * FROM comments WHERE ativo = 1 ORDER BY id DESC LIMIT 5
+ */
+async function listarComentariosHome() {
+  const ctx = getProjectContext();
+  
+  return advancedApiClient.advancedSelect({
+    project_id: ctx.project_id,
+    id_instancia: ctx.id_instancia,
+    table: TABLE_NAME,
+    where: { ativo: 1 },
+    order_by: 'id DESC',
+    limit: 5
+  });
+}
+
+module.exports = {
+  listarComentarios,
+  listarTodosComentarios,
+  criarComentario,
+  atualizarComentario,
+  deletarComentario,
+  listarComentariosHome,
+};
+
+
+
+
+---------------------------------------
+/**
+ * ====================================================
+ * MODEL - DASHBOARD (USANDO API GO)
+ * ====================================================
+ */
+
+const advancedApiClient = require('../services/advancedApiClient.service.js');
+const { getProjectContext } = require('../config/project.config.js');
+
+module.exports = {
+
+  /**
+   * Lucro do dia (agendamentos concluídos hoje)
+   * Query original:
+   * SELECT IFNULL(SUM(s.preco), 0) AS total
+   * FROM agendamentos a
+   * JOIN servicos s ON s.id = a.servico_id
+   * WHERE a.data = CURDATE() AND a.status = 'concluido'
+   */
+  async lucroHoje() {
+    const ctx = getProjectContext();
+    
+    const result = await advancedApiClient.advancedSelect({
+      project_id: ctx.project_id,
+      id_instancia: ctx.id_instancia,
+      table: 'agendamentos',
+      alias: 'a',
+      select: ['IFNULL(SUM(s.preco), 0) as total'],
+      joins: [{
+        type: 'INNER',
+        table: 'servicos',
+        alias: 's',
+        on: 'a.servico_id = s.id'
+      }],
+      where: { 'a.status': 'concluido' },
+      where_raw: 'a.data = CURDATE()'
+    });
+    
+    return result[0]?.total || 0;
+  },
+
+  /**
+   * Lucro da semana
+   * Query original:
+   * SELECT IFNULL(SUM(s.preco), 0) AS total
+   * FROM agendamentos a
+   * JOIN servicos s ON s.id = a.servico_id
+   * WHERE YEARWEEK(a.data, 1) = YEARWEEK(CURDATE(), 1) AND a.status = 'concluido'
+   */
+  async lucroSemana() {
+    const ctx = getProjectContext();
+    
+    const result = await advancedApiClient.advancedSelect({
+      project_id: ctx.project_id,
+      id_instancia: ctx.id_instancia,
+      table: 'agendamentos',
+      alias: 'a',
+      select: ['IFNULL(SUM(s.preco), 0) as total'],
+      joins: [{
+        type: 'INNER',
+        table: 'servicos',
+        alias: 's',
+        on: 'a.servico_id = s.id'
+      }],
+      where: { 'a.status': 'concluido' },
+      where_raw: 'YEARWEEK(a.data, 1) = YEARWEEK(CURDATE(), 1)'
+    });
+    
+    return result[0]?.total || 0;
+  },
+
+  /**
+   * Total de agendamentos hoje
+   * Query original:
+   * SELECT COUNT(*) AS total
+   * FROM agendamentos
+   * WHERE data = CURDATE() AND status = 'agendado'
+   */
+  async totalAgendamentosHoje() {
+    const ctx = getProjectContext();
+    
+    const result = await advancedApiClient.advancedSelect({
+      project_id: ctx.project_id,
+      id_instancia: ctx.id_instancia,
+      table: 'agendamentos',
+      select: ['COUNT(*) as total'],
+      where: { 'status': 'agendado' },
+      where_raw: 'data = CURDATE()'
+    });
+    
+    return result[0]?.total || 0;
+  },
+
+  /**
+   * Lista de agendamentos de hoje
+   * Query original:
+   * SELECT a.id, a.hora, c.nome AS cliente, s.nome AS servico, p.nome AS profissional, a.observacoes
+   * FROM agendamentos a
+   * JOIN clientes c ON c.id = a.cliente_id
+   * JOIN servicos s ON s.id = a.servico_id
+   * JOIN profissionais p ON p.id = a.profissional_id
+   * WHERE a.data = CURDATE() AND a.status = 'agendado'
+   * ORDER BY a.hora ASC
+   */
+  async listarAgendaHoje() {
+    const ctx = getProjectContext();
+    
+    return advancedApiClient.advancedSelect({
+      project_id: ctx.project_id,
+      id_instancia: ctx.id_instancia,
+      table: 'agendamentos',
+      alias: 'a',
+      select: [
+        'a.id',
+        'a.hora',
+        'c.nome AS cliente',
+        's.nome AS servico',
+        'p.nome AS profissional',
+        'a.observacoes'
+      ],
+      joins: [
+        {
+          type: 'INNER',
+          table: 'clientes',
+          alias: 'c',
+          on: 'a.cliente_id = c.id'
+        },
+        {
+          type: 'INNER',
+          table: 'servicos',
+          alias: 's',
+          on: 'a.servico_id = s.id'
+        },
+        {
+          type: 'INNER',
+          table: 'profissionais',
+          alias: 'p',
+          on: 'a.profissional_id = p.id'
+        }
+      ],
+      where: { 'a.status': 'agendado' },
+      where_raw: 'a.data = CURDATE()',
+      order_by: 'a.hora ASC'
+    });
+  }
+
+};
+
+
+------------------------------------------------------------
+/**
+ * ====================================================
+ * MODEL - SERVIÇOS (USANDO API GO)
+ * ====================================================
+ */
+
+const apiClient = require('../services/apiClient.service.js');
+const advancedApiClient = require('../services/advancedApiClient.service.js');
+const { getProjectContext } = require('../config/project.config.js');
+
+const TABLE_NAME = 'servicos';
+
+/**
+ * Listar todos os serviços
+ * Query original: SELECT * FROM servicos ORDER BY criado_em DESC
+ */
+async function listarServicos() {
+  const ctx = getProjectContext();
+  
+  return advancedApiClient.advancedSelect({
+    project_id: ctx.project_id,
+    id_instancia: ctx.id_instancia,
+    table: TABLE_NAME,
+    order_by: 'criado_em DESC'
+  });
+}
+
+/**
+ * Criar novo serviço
+ * Query original: INSERT INTO servicos (nome, duracao_min, preco, img) VALUES (?, ?, ?, ?)
+ */
+async function criarServico(nome, duracao_min, preco, img) {
+  const ctx = getProjectContext();
+  
+  return apiClient.insert(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    {
+      nome,
+      duracao_min,
+      preco,
+      img: img || null
+    }
+  );
+}
+
+/**
+ * Listar serviços para home (todos)
+ * Query original: SELECT * FROM servicos ORDER BY criado_em DESC
+ */
+async function listarServicosHome() {
+  return listarServicos();
+}
+
+/**
+ * Atualizar serviço
+ * Query original: UPDATE servicos SET nome = ?, duracao_min = ?, preco = ?, img = ? WHERE id = ?
+ */
+async function atualizarServico(id, nome, duracao_min, preco, imgName) {
+  const ctx = getProjectContext();
+  
+  const data = { nome, duracao_min, preco };
+  
+  if (imgName) {
+    data.img = imgName;
+  }
+  
+  return apiClient.update(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    id,
+    data
+  );
+}
+
+/**
+ * Deletar serviço
+ * Query original: DELETE FROM servicos WHERE id = ?
+ */
+async function deletarServico(id) {
+  const ctx = getProjectContext();
+  
+  return apiClient.delete(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    id
+  );
+}
+
+module.exports = {
+  listarServicos,
+  criarServico,
+  listarServicosHome,
+  atualizarServico,
+  deletarServico,
+};
+
+
+
+
+
+
+/**
+ * ====================================================
+ * MODEL - PROFISSIONAIS (USANDO API GO)
+ * ====================================================
+ */
+
+const apiClient = require('../services/apiClient.service.js');
+const advancedApiClient = require('../services/advancedApiClient.service.js');
+const { getProjectContext } = require('../config/project.config.js');
+
+const TABLE_NAME = 'profissionais';
+
+/**
+ * Criar novo profissional
+ * Query original: INSERT INTO profissionais (nome, especialidade, img) VALUES (?, ?, ?)
+ */
+async function criarProfissional(nome, especialidade, img) {
+  const ctx = getProjectContext();
+  
+  if (!nome || nome.trim() === '') {
+    throw new Error('Nome do profissional é obrigatório');
+  }
+  
+  return apiClient.insert(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    {
+      nome: nome.trim(),
+      especialidade: especialidade?.trim() || null,
+      img: img || null,
+      ativo: 1
+    }
+  );
+}
+
+/**
+ * Listar profissionais (ativos ou inativos)
+ * Query original: SELECT * FROM profissionais WHERE ativo = ? ORDER BY nome
+ */
+async function listarProfissionais(ativos = true) {
+  const ctx = getProjectContext();
+  
+  return advancedApiClient.advancedSelect({
+    project_id: ctx.project_id,
+    id_instancia: ctx.id_instancia,
+    table: TABLE_NAME,
+    where: { ativo: ativos ? 1 : 0 },
+    order_by: 'nome'
+  });
+}
+
+/**
+ * Buscar profissional por ID
+ * Query original: SELECT * FROM profissionais WHERE id = ?
+ */
+async function buscarProfissionalPorId(id) {
+  const ctx = getProjectContext();
+  
+  const result = await apiClient.get(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    { id }
+  );
+  
+  return result && result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Atualizar profissional
+ * Query original: UPDATE profissionais SET nome = ?, especialidade = ?, img = ?, ativo = ? WHERE id = ?
+ */
+async function atualizarProfissional(id, nome, especialidade, img, ativo) {
+  const ctx = getProjectContext();
+  
+  if (!nome || nome.trim() === '') {
+    throw new Error('Nome do profissional é obrigatório');
+  }
+  
+  const data = {
+    nome: nome.trim(),
+    especialidade: especialidade?.trim() || null,
+    ativo: ativo ? 1 : 0
+  };
+  
+  if (img) {
+    data.img = img;
+  }
+  
+  return apiClient.update(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    id,
+    data
+  );
+}
+
+/**
+ * Deletar profissional
+ * Query original: DELETE FROM profissionais WHERE id = ?
+ */
+async function deletarProfissional(id) {
+  const ctx = getProjectContext();
+  
+  return apiClient.delete(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    id
+  );
+}
+
+/**
+ * Listar profissionais para home (apenas ativos)
+ * Query original: SELECT * FROM profissionais WHERE ativo = 1 ORDER BY nome
+ */
+async function listarProfissionaisHome() {
+  return listarProfissionais(true);
+}
+
+module.exports = {
+  criarProfissional,
+  listarProfissionais,
+  buscarProfissionalPorId,
+  atualizarProfissional,
+  deletarProfissional,
+  listarProfissionaisHome,
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * ====================================================
+ * MODEL - TEXTOS DO SITE (USANDO API GO)
+ * ====================================================
+ */
+
+const apiClient = require('../services/apiClient.service.js');
+const { getProjectContext } = require('../config/project.config.js');
+
+const TABLE_NAME = 'site_texts';
+
+/**
+ * Listar todos os textos do site
+ * Query original: SELECT * FROM site_texts
+ */
+async function listarTextos() {
+  const ctx = getProjectContext();
+  
+  return apiClient.get(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    {}
+  );
+}
+
+/**
+ * Buscar texto por chave
+ * Query original: SELECT * FROM site_texts WHERE key_name = ?
+ */
+async function buscarTextoPorKey(key_name) {
+  const ctx = getProjectContext();
+  
+  const result = await apiClient.get(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    { key_name }
+  );
+  
+  return result && result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Atualizar texto
+ * Query original: UPDATE site_texts SET value = ? WHERE key_name = ?
+ */
+async function atualizarTexto(key_name, value) {
+  const ctx = getProjectContext();
+  
+  // Primeiro busca o ID do registro
+  const texto = await buscarTextoPorKey(key_name);
+  
+  if (!texto) {
+    throw new Error(`Chave ${key_name} não encontrada`);
+  }
+  
+  return apiClient.update(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    texto.id,
+    { value }
+  );
+}
+
+module.exports = {
+  listarTextos,
+  buscarTextoPorKey,
+  atualizarTexto,
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * ====================================================
+ * MODEL - DIAS BLOQUEADOS (USANDO API GO)
+ * ====================================================
+ */
+
+const apiClient = require('../services/apiClient.service.js');
+const advancedApiClient = require('../services/advancedApiClient.service.js');
+const { getProjectContext } = require('../config/project.config.js');
+
+const TABLE_NAME = 'dia_null';
+
+/**
+ * Listar dias bloqueados de um profissional (a partir de hoje)
+ * Query original:
+ * SELECT * FROM dia_null 
+ * WHERE profissional_id = ? AND data >= ? 
+ * ORDER BY data
+ */
+async function listarDiasBloqueados(profissional_id) {
+  const ctx = getProjectContext();
+  const hoje = new Date().toISOString().split('T')[0];
+  
+  return advancedApiClient.advancedSelect({
+    project_id: ctx.project_id,
+    id_instancia: ctx.id_instancia,
+    table: TABLE_NAME,
+    where: { profissional_id },
+    where_raw: `data >= '${hoje}'`,
+    order_by: 'data'
+  });
+}
+
+/**
+ * Criar bloqueio de dia
+ * Query original: INSERT INTO dia_null (profissional_id, data, motivo) VALUES (?, ?, ?)
+ */
+async function criarDiaBloqueado(profissional_id, data, motivo) {
+  const ctx = getProjectContext();
+  const hoje = new Date().toISOString().split('T')[0];
+  
+  if (data < hoje) {
+    throw new Error('Não é possível bloquear datas passadas');
+  }
+  
+  return apiClient.insert(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    {
+      profissional_id,
+      data,
+      motivo: motivo || null
+    }
+  );
+}
+
+/**
+ * Deletar bloqueio de dia
+ * Query original: DELETE FROM dia_null WHERE id = ?
+ */
+async function deletarDiaBloqueado(id) {
+  const ctx = getProjectContext();
+  
+  return apiClient.delete(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    id
+  );
+}
+
+/**
+ * Verificar se um dia está bloqueado
+ * Query original: SELECT * FROM dia_null WHERE profissional_id = ? AND data = ?
+ */
+async function verificarDiaBloqueado(profissional_id, data) {
+  const ctx = getProjectContext();
+  
+  const result = await apiClient.get(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    { profissional_id, data }
+  );
+  
+  return result && result.length > 0;
+}
+
+module.exports = {
+  listarDiasBloqueados,
+  criarDiaBloqueado,
+  deletarDiaBloqueado,
+  verificarDiaBloqueado,
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * ====================================================
+ * MODEL - HORÁRIOS BLOQUEADOS (USANDO API GO)
+ * ====================================================
+ */
+
+const apiClient = require('../services/apiClient.service.js');
+const advancedApiClient = require('../services/advancedApiClient.service.js');
+const { getProjectContext } = require('../config/project.config.js');
+
+const TABLE_NAME = 'orarios_null';
+
+/**
+ * Listar horários bloqueados de um profissional em uma data (apenas >= hoje)
+ * Query original:
+ * SELECT * FROM orarios_null 
+ * WHERE profissional_id = ? AND data = ? 
+ * ORDER BY hora
+ */
+async function listarOrariosBloqueados(profissional_id, data) {
+  const ctx = getProjectContext();
+  
+  if (!profissional_id || !data) return [];
+  
+  const hoje = new Date().toISOString().split('T')[0];
+  if (data < hoje) return [];
+  
+  return advancedApiClient.advancedSelect({
+    project_id: ctx.project_id,
+    id_instancia: ctx.id_instancia,
+    table: TABLE_NAME,
+    where: { profissional_id, data },
+    order_by: 'hora'
+  });
+}
+
+/**
+ * Criar bloqueio de horário
+ * Query original: INSERT INTO orarios_null (profissional_id, data, hora, motivo) VALUES (?, ?, ?, ?)
+ */
+async function criarHorarioBloqueado(profissional_id, data, hora, motivo) {
+  const ctx = getProjectContext();
+  const hoje = new Date().toISOString().split('T')[0];
+  
+  if (data < hoje) {
+    throw new Error('Não é possível bloquear horários em datas passadas');
+  }
+  
+  return apiClient.insert(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    {
+      profissional_id,
+      data,
+      hora,
+      motivo: motivo || null
+    }
+  );
+}
+
+/**
+ * Deletar bloqueio de horário
+ * Query original: DELETE FROM orarios_null WHERE id = ?
+ */
+async function deletarHorarioBloqueado(id) {
+  const ctx = getProjectContext();
+  
+  return apiClient.delete(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    id
+  );
+}
+
+/**
+ * Verificar se uma hora está bloqueada
+ * Query original: SELECT * FROM orarios_null WHERE profissional_id = ? AND data = ? AND hora = ?
+ */
+async function verificarHoraBloqueada(profissional_id, data, hora) {
+  const ctx = getProjectContext();
+  
+  const result = await apiClient.get(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    { profissional_id, data, hora }
+  );
+  
+  return result && result.length > 0;
+}
+
+module.exports = {
+  listarOrariosBloqueados,
+  criarHorarioBloqueado,
+  deletarHorarioBloqueado,
+  verificarHoraBloqueada,
+};
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * ====================================================
+ * MODEL - GRADE SEMANAL DOS PROFISSIONAIS (USANDO API GO)
+ * ====================================================
+ */
+
+const apiClient = require('../services/apiClient.service.js');
+const advancedApiClient = require('../services/advancedApiClient.service.js');
+const { getProjectContext } = require('../config/project.config.js');
+
+const TABLE_NAME = 'professional_schedule';
+
+/**
+ * Listar a grade semanal de um profissional
+ * Query original:
+ * SELECT * FROM professional_schedule 
+ * WHERE profissional_id = ? 
+ * ORDER BY FIELD(dia_semana, "seg","ter","qua","qui","sex","sab","dom")
+ */
+async function listarGradeProfissional(profissional_id) {
+  const ctx = getProjectContext();
+  
+  return advancedApiClient.advancedSelect({
+    project_id: ctx.project_id,
+    id_instancia: ctx.id_instancia,
+    table: TABLE_NAME,
+    where: { profissional_id },
+    order_by: 'FIELD(dia_semana, "seg","ter","qua","qui","sex","sab","dom")'
+  });
+}
+
+/**
+ * Listar grade semanal (alias)
+ */
+async function listarProfessionalSchedule(profissional_id) {
+  return listarGradeProfissional(profissional_id);
+}
+
+/**
+ * Criar ou atualizar grade de um dia específico
+ * Nota: Como a API Go não tem UPSERT nativo, fazemos:
+ * 1. Buscar se existe
+ * 2. Se existe, UPDATE
+ * 3. Se não existe, INSERT
+ */
+async function criarOuAtualizarGrade(profissional_id, dia_semana, abre, abertura, pausa_inicio, pausa_fim, fechamento) {
+  const ctx = getProjectContext();
+  
+  // Verificar se já existe
+  const existente = await apiClient.get(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    { profissional_id, dia_semana }
+  );
+  
+  const dados = {
+    abre: abre ? 1 : 0,
+    abertura,
+    pausa_inicio: pausa_inicio || null,
+    pausa_fim: pausa_fim || null,
+    fechamento
+  };
+  
+  if (existente && existente.length > 0) {
+    // UPDATE
+    return apiClient.update(
+      ctx.project_id,
+      ctx.id_instancia,
+      TABLE_NAME,
+      existente[0].id,
+      dados
+    );
+  } else {
+    // INSERT
+    return apiClient.insert(
+      ctx.project_id,
+      ctx.id_instancia,
+      TABLE_NAME,
+      {
+        profissional_id,
+        dia_semana,
+        ...dados
+      }
+    );
+  }
+}
+
+/**
+ * Deletar grade de um dia específico
+ * Query original: DELETE FROM professional_schedule WHERE profissional_id = ? AND dia_semana = ?
+ */
+async function deletarGrade(profissional_id, dia_semana) {
+  const ctx = getProjectContext();
+  
+  // Buscar o ID primeiro
+  const existente = await apiClient.get(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    { profissional_id, dia_semana }
+  );
+  
+  if (existente && existente.length > 0) {
+    return apiClient.delete(
+      ctx.project_id,
+      ctx.id_instancia,
+      TABLE_NAME,
+      existente[0].id
+    );
+  }
+}
+
+/**
+ * Atualizar grade semanal completa (recebe dados do formulário)
+ */
+async function atualizarProfessionalSchedule(profissional_id, dados) {
+  const dias = ['seg','ter','qua','qui','sex','sab','dom'];
+  
+  for (let dia of dias) {
+    const abre = dados[`${dia}_abre`] === 'on' ? 1 : 0;
+    const abertura = dados[`${dia}_abertura`] || '09:00:00';
+    const pausa_inicio = dados[`${dia}_pausa_inicio`] || null;
+    const pausa_fim = dados[`${dia}_pausa_fim`] || null;
+    const fechamento = dados[`${dia}_fechamento`] || '18:00:00';
+    
+    await criarOuAtualizarGrade(
+      profissional_id,
+      dia,
+      abre,
+      abertura,
+      pausa_inicio,
+      pausa_fim,
+      fechamento
+    );
+  }
+}
+
+module.exports = {
+  listarGradeProfissional,
+  listarProfessionalSchedule,
+  criarOuAtualizarGrade,
+  deletarGrade,
+  atualizarProfessionalSchedule,
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * ====================================================
+ * MODEL - HORÁRIOS E AGENDAMENTOS (USANDO API GO)
+ * ====================================================
+ */
+
+const apiClient = require('../services/apiClient.service.js');
+const advancedApiClient = require('../services/advancedApiClient.service.js');
+const { getProjectContext } = require('../config/project.config.js');
+const diaNullModel = require('./diaNullModel.js');
+const orariosNullModel = require('./orariosNullModel.js');
+const professionalScheduleModel = require('./professionalScheduleModel.js');
+
+const TABLE_NAME = 'agendamentos';
+
+/**
+ * Verificar se um horário está agendado
+ * Query original:
+ * SELECT * FROM agendamentos 
+ * WHERE profissional_id = ? AND data = ? AND hora = ? AND status = "agendado"
+ */
+async function verificarHorario(profissional_id, data, hora) {
+  const ctx = getProjectContext();
+  
+  const result = await apiClient.get(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    { profissional_id, data, hora, status: 'agendado' }
+  );
+  
+  return result && result.length > 0;
+}
+
+/**
+ * Criar agendamento
+ * Query original:
+ * INSERT INTO agendamentos 
+ * (cliente_id, profissional_id, servico_id, data, hora, observacoes)
+ * VALUES (?, ?, ?, ?, ?, ?)
+ */
+async function criarAgendamento(cliente_id, profissional_id, servico_id, data, hora, observacoes = null) {
+  const ctx = getProjectContext();
+  
+  return apiClient.insert(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    {
+      cliente_id,
+      profissional_id,
+      servico_id,
+      data,
+      hora,
+      observacoes,
+      status: 'agendado'
+    }
+  );
+}
+
+/**
+ * Listar agendamentos de um cliente
+ * Query original:
+ * SELECT a.id, DATE_FORMAT(a.data, '%d/%m/%Y') AS data, DATE_FORMAT(a.hora, '%H:%i') AS hora,
+ *        a.status, s.nome AS servico, p.nome AS profissional
+ * FROM agendamentos a
+ * JOIN servicos s ON a.servico_id = s.id
+ * JOIN profissionais p ON a.profissional_id = p.id
+ * WHERE a.cliente_id = ?
+ * ORDER BY a.data, a.hora
+ */
+async function listarPorCliente(cliente_id) {
+  const ctx = getProjectContext();
+  
+  return advancedApiClient.advancedSelect({
+    project_id: ctx.project_id,
+    id_instancia: ctx.id_instancia,
+    table: TABLE_NAME,
+    alias: 'a',
+    select: [
+      'a.id',
+      'DATE_FORMAT(a.data, "%d/%m/%Y") AS data',
+      'DATE_FORMAT(a.hora, "%H:%i") AS hora',
+      'a.status',
+      's.nome AS servico',
+      'p.nome AS profissional'
+    ],
+    joins: [
+      { type: 'INNER', table: 'servicos', alias: 's', on: 'a.servico_id = s.id' },
+      { type: 'INNER', table: 'profissionais', alias: 'p', on: 'a.profissional_id = p.id' }
+    ],
+    where: { 'a.cliente_id': cliente_id },
+    order_by: 'a.data, a.hora'
+  });
+}
+
+/**
+ * Listar agendamentos futuros de um cliente (apenas agendados e data >= hoje)
+ * Query original:
+ * SELECT a.id, a.data, a.hora, a.status, a.observacoes, s.nome AS servico, p.nome AS profissional
+ * FROM agendamentos a
+ * INNER JOIN servicos s ON s.id = a.servico_id
+ * INNER JOIN profissionais p ON p.id = a.profissional_id
+ * WHERE a.cliente_id = ? AND a.data >= ? AND a.status = 'agendado'
+ * ORDER BY a.data, a.hora
+ */
+async function listarFuturosPorCliente(cliente_id) {
+  const ctx = getProjectContext();
+  const hoje = new Date().toISOString().split('T')[0];
+  
+  return advancedApiClient.advancedSelect({
+    project_id: ctx.project_id,
+    id_instancia: ctx.id_instancia,
+    table: TABLE_NAME,
+    alias: 'a',
+    select: [
+      'a.id',
+      'a.data',
+      'a.hora',
+      'a.status',
+      'a.observacoes',
+      's.nome AS servico',
+      'p.nome AS profissional'
+    ],
+    joins: [
+      { type: 'INNER', table: 'servicos', alias: 's', on: 'a.servico_id = s.id' },
+      { type: 'INNER', table: 'profissionais', alias: 'p', on: 'a.profissional_id = p.id' }
+    ],
+    where: { 'a.cliente_id': cliente_id, 'a.status': 'agendado' },
+    where_raw: `a.data >= '${hoje}'`,
+    order_by: 'a.data, a.hora'
+  });
+}
+
+/**
+ * Listar horários agendados de um profissional em uma data
+ * Query original:
+ * SELECT a.id, a.hora, a.status, c.nome AS cliente_nome
+ * FROM agendamentos a
+ * JOIN clientes c ON a.cliente_id = c.id
+ * WHERE a.profissional_id = ? AND a.data = ?
+ * ORDER BY a.hora
+ */
+async function listarHorarios(profissional_id, data) {
+  const ctx = getProjectContext();
+  
+  return advancedApiClient.advancedSelect({
+    project_id: ctx.project_id,
+    id_instancia: ctx.id_instancia,
+    table: TABLE_NAME,
+    alias: 'a',
+    select: [
+      'a.id',
+      'a.hora',
+      'a.status',
+      'c.nome AS cliente_nome'
+    ],
+    joins: [
+      { type: 'INNER', table: 'clientes', alias: 'c', on: 'a.cliente_id = c.id' }
+    ],
+    where: { 'a.profissional_id': profissional_id, 'a.data': data },
+    order_by: 'a.hora'
+  });
+}
+
+/**
+ * Buscar agendamento por ID
+ * Query original: SELECT * FROM agendamentos WHERE id = ?
+ */
+async function buscarPorId(id) {
+  const ctx = getProjectContext();
+  
+  const result = await apiClient.get(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    { id }
+  );
+  
+  return result && result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Deletar agendamento
+ * Query original: DELETE FROM agendamentos WHERE id = ?
+ */
+async function deletarAgendamento(id) {
+  const ctx = getProjectContext();
+  
+  return apiClient.delete(
+    ctx.project_id,
+    ctx.id_instancia,
+    TABLE_NAME,
+    id
+  );
+}
+
+/**
+ * ====================================================
+ * LÓGICA DE HORÁRIOS DISPONÍVEIS
+ * ====================================================
+ * ATENÇÃO: Esta lógica é complexa e envolve cálculos JavaScript.
+ * Não pode ser totalmente feita em SQL, então mantemos no Node.
+ */
+
+/**
+ * Função auxiliar para somar minutos a uma hora
+ */
+function horaSoma(horaStr, minutosAdd) {
+  const [h, m] = horaStr.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h);
+  d.setMinutes(m + minutosAdd);
+  return d.toTimeString().split(' ')[0].slice(0,5);
+}
+
+/**
+ * Listar horários disponíveis (para admin)
+ * Esta função monta a lista de horários com base na grade semanal,
+ * remove os agendados e os bloqueados.
+ */
+async function listarHorariosDisponiveisAtualizado(profissional_id, data) {
+  // 1️⃣ Verifica se o dia inteiro está bloqueado
+  const diaBloqueado = await diaNullModel.verificarDiaBloqueado(profissional_id, data);
+  if (diaBloqueado) return [];
+  
+  // 2️⃣ Pega o dia da semana
+  const diaSemanaNum = new Date(data + 'T00:00:00').getDay();
+  const mapDias = ['dom','seg','ter','qua','qui','sex','sab'];
+  const diaSemana = mapDias[diaSemanaNum];
+  
+  // 3️⃣ Pega grade semanal do profissional
+  const grade = await professionalScheduleModel.listarGradeProfissional(profissional_id);
+  const diaGrade = grade.find(g => g.dia_semana === diaSemana);
+  
+  if (!diaGrade || diaGrade.abre === 0) return [];
+  
+  // 4️⃣ Monta horários com base na abertura, pausa e fechamento
+  const horarios = [];
+  let horaAtual = diaGrade.abertura;
+  const horaFechamento = diaGrade.fechamento;
+  const intervalo = 30;
+  
+  while (horaAtual < horaFechamento) {
+    // Ignora horário de pausa
+    if (diaGrade.pausa_inicio && diaGrade.pausa_fim) {
+      if (horaAtual >= diaGrade.pausa_inicio && horaAtual < diaGrade.pausa_fim) {
+        horaAtual = diaGrade.pausa_fim;
+        continue;
+      }
+    }
+    
+    horarios.push(horaAtual);
+    horaAtual = horaSoma(horaAtual, intervalo);
+  }
+  
+  // 5️⃣ Busca horários já agendados
+  const ctx = getProjectContext();
+  const agendados = await advancedApiClient.advancedSelect({
+    project_id: ctx.project_id,
+    id_instancia: ctx.id_instancia,
+    table: TABLE_NAME,
+    select: ['hora'],
+    where: { profissional_id, data, status: 'agendado' }
+  });
+  
+  const horasAgendadas = agendados.map(a => a.hora.slice(0,5));
+  
+  // 6️⃣ Remove horários bloqueados (orarios_null)
+  const bloqueios = await orariosNullModel.listarOrariosBloqueados(profissional_id, data);
+  const horasBloqueadas = bloqueios.map(b => b.hora.slice(0,5));
+  
+  // 7️⃣ Filtra horários disponíveis
+  return horarios.filter(h => !horasAgendadas.includes(h) && !horasBloqueadas.includes(h));
+}
+
+/**
+ * Listar horários disponíveis para cliente (com indicação de disponível/agendado)
+ */
+async function listarHorariosDisponiveisCliente(profissional_id, data) {
+  // 1️⃣ Verifica bloqueio de dia
+  const diaBloqueado = await diaNullModel.verificarDiaBloqueado(profissional_id, data);
+  if (diaBloqueado) return [];
+  
+  // 2️⃣ Dia da semana
+  const diaSemanaNum = new Date(data + 'T00:00:00').getDay();
+  const mapDias = ['dom','seg','ter','qua','qui','sex','sab'];
+  const diaSemana = mapDias[diaSemanaNum];
+  
+  // 3️⃣ Grade semanal
+  const grade = await professionalScheduleModel.listarGradeProfissional(profissional_id);
+  const diaGrade = grade.find(g => g.dia_semana === diaSemana);
+  
+  if (!diaGrade || diaGrade.abre === 0) return [];
+  
+  // 4️⃣ Monta horários
+  const horarios = [];
+  let horaAtual = diaGrade.abertura;
+  const horaFechamento = diaGrade.fechamento;
+  const intervalo = 30;
+  
+  while (horaAtual < horaFechamento) {
+    if (diaGrade.pausa_inicio && diaGrade.pausa_fim) {
+      if (horaAtual >= diaGrade.pausa_inicio && horaAtual < diaGrade.pausa_fim) {
+        horaAtual = diaGrade.pausa_fim;
+        continue;
+      }
+    }
+    
+    horarios.push(horaAtual);
+    horaAtual = horaSoma(horaAtual, intervalo);
+  }
+  
+  // 5️⃣ Agendamentos
+  const ctx = getProjectContext();
+  const agendados = await advancedApiClient.advancedSelect({
+    project_id: ctx.project_id,
+    id_instancia: ctx.id_instancia,
+    table: TABLE_NAME,
+    select: ['hora'],
+    where: { profissional_id, data, status: 'agendado' }
+  });
+  
+  const horasAgendadas = agendados.map(a => a.hora.slice(0,5));
+  
+  // 6️⃣ Bloqueios
+  const bloqueios = await orariosNullModel.listarOrariosBloqueados(profissional_id, data);
+  const horasBloqueadas = bloqueios.map(b => b.hora.slice(0,5));
+  
+  // 7️⃣ Monta retorno para o cliente
+  return horarios.map(h => ({
+    hora: h,
+    disponivel: !horasAgendadas.includes(h) && !horasBloqueadas.includes(h),
+    agendamento: horasAgendadas.includes(h) ? { hora: h } : null
+  }));
+}
+
+module.exports = {
+  verificarHorario,
+  criarAgendamento,
+  listarPorCliente,
+  listarFuturosPorCliente,
+  listarHorarios,
+  buscarPorId,
+  deletarAgendamento,
+  listarHorariosDisponiveisAtualizado,
+  listarHorariosDisponiveisCliente,
+};
+
+
+
+
+
+
+
+
+
+
+RESUMO COMPLETO - TODOS OS MODELS REFATORADOS
+📋 Checklist de Queries Convertidas:
+ModelQuery OriginalAPI Go UsadaStatusadminModelSELECT/INSERT/UPDATE/DELETE/COUNTget, insert, update, delete, advancedSelect✅clienteModelSELECT/INSERT/UPDATEget, insert, update✅commentsModelSELECT/INSERT/UPDATE/DELETEget, insert, update, delete, advancedSelect✅dashboardModelJOIN 3 tabelas + SUM/COUNTadvancedSelect com JOINs✅serviceModelSELECT/INSERT/UPDATE/DELETEget, insert, update, delete, advancedSelect✅professionalModelSELECT/INSERT/UPDATE/DELETEget, insert, update, delete, advancedSelect✅siteTextsModelSELECT/UPDATEget, update✅diaNullModelSELECT/INSERT/DELETEget, insert, delete, advancedSelect✅orariosNullModelSELECT/INSERT/DELETEget, insert, delete, advancedSelect✅professionalScheduleModelSELECT/INSERT/UPDATE/DELETEget, insert, update, delete, advancedSelect✅horarioModelJOIN + lógica JS complexa

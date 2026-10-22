@@ -1,0 +1,62 @@
+
+<div class="profile-container">
+    <div class="profile-avatar">
+        <i class="fas fa-user-circle"></i>
+    </div>
+
+    <h1>Meu Perfil</h1>
+
+    {{#if success}}
+        <div class="message success"><i class="fas fa-check-circle"></i> {{success}}</div>
+    {{/if}}
+    {{#if error}}
+        <div class="message error"><i class="fas fa-exclamation-triangle"></i> {{error}}</div>
+    {{/if}}
+
+    {{#if cliente}}
+    <form action="/client/profile" method="POST" id="profileForm">
+        <div class="input-group">
+            <label>Nome Completo</label>
+            <i class="fas fa-id-card"></i>
+            <input type="text" name="nome" value="{{cliente.nome}}" required placeholder="Seu nome">
+        </div>
+
+        <div class="input-group">
+            <label>E-mail</label>
+            <i class="fas fa-envelope"></i>
+            <input type="email" name="email" value="{{cliente.email}}" required placeholder="seu@email.com">
+        </div>
+
+        <div class="input-group">
+            <label>WhatsApp</label>
+            <i class="fab fa-whatsapp"></i>
+            <input type="tel" id="telInput" name="telefone" value="{{cliente.telefone}}" 
+                   placeholder="(00) 00000-0000" inputmode="tel">
+        </div>
+
+        <div class="input-group">
+            <label>Nova Senha</label>
+            <i class="fas fa-key"></i>
+            <input type="password" name="senha" placeholder="Deixe vazio para não alterar">
+        </div>
+
+        <button type="submit">Atualizar Dados</button>
+    </form>
+    {{else}}
+        <p style="text-align: center; color: #666;">Dados não carregados.</p>
+    {{/if}}
+
+    <a href="/client/home" class="back-link">
+        <i class="fas fa-chevron-left"></i> Painel Inicial
+    </a>
+</div>
+
+<script>
+    // MÁSCARA DE TELEFONE AUTOMÁTICA
+    const telInput = document.getElementById('telInput');
+
+    telInput.addEventListener('input', (e) => {
+        let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+        e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+    });
+</script>

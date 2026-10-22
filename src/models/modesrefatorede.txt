@@ -1,0 +1,1216 @@
+/**
+ * ====================================================
+ * MODEL - ADMINISTRADORES (REQUISIÇÕES PARA NODE BACKEND)
+ * ====================================================
+ */
+
+const bcrypt = require('bcrypt');
+const nodeApi = require('../services/nodeApiClient.service.js');
+
+const SALT_ROUNDS = 10;
+const TABLE_NAME = 'admin';
+
+/**
+ * Validar login do administrador
+ */
+async function validarLogin(email, senha) {
+  const result = await nodeApi.get(TABLE_NAME, { email });
+  
+  if (!result || result.length === 0) return null;
+  
+  const admin = result[0];
+  
+  const senhaValida = await bcrypt.compare(senha, admin.senha_hash);
+  if (!senhaValida) return null;
+  
+  return admin;
+}
+
+/**
+ * Atualizar dados do admin
+ */
+async function atualizarAdmin(id, nome, email) {
+  return nodeApi.update(TABLE_NAME, id, { nome, email });
+}
+
+/**
+ * Atualizar senha do admin
+ */
+async function atualizarSenha(id, novaSenha) {
+  const senha_hash = await bcrypt.hash(novaSenha, SALT_ROUNDS);
+  return nodeApi.update(TABLE_NAME, id, { senha_hash });
+}
+
+/**
+ * Deletar admin
+ */
+async function deletarAdmin(id) {
+  return nodeApi.delete(TABLE_NAME, id);
+}
+
+/**
+ * Contar total de admins
+ */
+async function contarAdmins() {
+  const result = await nodeApi.advancedSelect({
+    table: TABLE_NAME,
+    select: ['COUNT(*) as total']
+  });
+  
+  return result[0]?.total || 0;
+}
+
+/**
+ * Criar novo admin
+ */
+async function criarAdmin(nome, email, senha) {
+  const senha_hash = await bcrypt.hash(senha, SALT_ROUNDS);
+  return nodeApi.insert(TABLE_NAME, { nome, email, senha_hash });
+}
+
+/**
+ * Listar todos os admins
+ */
+async function listarAdmins() {
+  return nodeApi.advancedSelect({
+    table: TABLE_NAME,
+    select: ['id', 'nome', 'email', 'criado_em'],
+    order_by: 'criado_em DESC'
+  });
+}
+
+module.exports = {
+  validarLogin,
+  atualizarAdmin,
+  atualizarSenha,
+  deletarAdmin,
+  contarAdmins,
+  criarAdmin,
+  listarAdmins
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * ====================================================
+ * MODEL - CLIENTES (REQUISIÇÕES PARA NODE BACKEND)
+ * ====================================================
+ */
+
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const nodeApi = require('../services/nodeApiClient.service.js');
+
+const SALT_ROUNDS = 10;
+const TABLE_NAME = 'clientes';
+
+/**
+ * Criar novo cliente
+ */
+async function criarCliente(nome, email, telefone, senha) {
+  const senha_hash = await bcrypt.hash(senha, SALT_ROUNDS);
+  return nodeApi.insert(TABLE_NAME, { nome, email, telefone, senha_hash });
+}
+
+/**
+ * Buscar cliente pelo email
+ */
+async function buscarClientePorEmail(email) {
+  const result = await nodeApi.get(TABLE_NAME, { email });
+  return result && result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Validar login do cliente
+ */
+async function validarLogin(email, senha) {
+  const cliente = await buscarClientePorEmail(email);
+  
+  if (!cliente) return null;
+  
+  const senhaValida = await bcrypt.compare(senha, cliente.senha_hash);
+  if (!senhaValida) return null;
+  
+  return cliente;
+}
+
+/**
+ * Atualizar perfil do cliente
+ */
+async function atualizarPerfil(id, nome, email, telefone, senha) {
+  const data = { nome, email, telefone };
+  
+  if (senha && senha.trim() !== '') {
+    data.senha_hash = await bcrypt.hash(senha, SALT_ROUNDS);
+  }
+  
+  return nodeApi.update(TABLE_NAME, id, data);
+}
+
+/**
+ * Gerar token de recuperação de senha
+ */
+async function salvarTokenRecuperacao(email) {
+  const token = crypto.randomBytes(32).toString('hex');
+  const expira = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+  
+  const cliente = await buscarClientePorEmail(email);
+  if (!cliente) throw new Error('Cliente não encontrado');
+  
+  await nodeApi.update(TABLE_NAME, cliente.id, {
+    reset_token: token,
+    reset_token_expira: expira.toISOString().slice(0, 19).replace('T', ' ')
+  });
+  
+  return token;
+}
+
+/**
+ * Buscar cliente pelo token de recuperação
+ */
+async function buscarPorToken(token) {
+  const result = await nodeApi.get(TABLE_NAME, { reset_token: token });
+  
+  if (!result || result.length === 0) return null;
+  
+  const cliente = result[0];
+  
+  const agora = new Date();
+  const expira = new Date(cliente.reset_token_expira);
+  
+  if (agora > expira) return null;
+  
+  return cliente;
+}
+
+/**
+ * Atualizar senha do cliente
+ */
+async function atualizarSenha(id, senha) {
+  const senha_hash = await bcrypt.hash(senha, SALT_ROUNDS);
+  
+  return nodeApi.update(TABLE_NAME, id, {
+    senha_hash,
+    reset_token: null,
+    reset_token_expira: null
+  });
+}
+
+module.exports = {
+  criarCliente,
+  buscarClientePorEmail,
+  validarLogin,
+  atualizarPerfil,
+  salvarTokenRecuperacao,
+  buscarPorToken,
+  atualizarSenha
+};
+
+
+
+
+
+
+
+
+
+/**
+ * ====================================================
+ * MODEL - COMENTÁRIOS (REQUISIÇÕES PARA NODE BACKEND)
+ * ====================================================
+ */
+
+const nodeApi = require('../services/nodeApiClient.service.js');
+
+const TABLE_NAME = 'comments';
+
+/**
+ * Listar comentários ativos
+ */
+async function listarComentarios() {
+  return nodeApi.get(TABLE_NAME, { ativo: 1 });
+}
+
+/**
+ * Listar todos os comentários (admin)
+ */
+async function listarTodosComentarios() {
+  return nodeApi.get(TABLE_NAME, {});
+}
+
+/**
+ * Criar novo comentário
+ */
+async function criarComentario(nome, comentario, img) {
+  return nodeApi.insert(TABLE_NAME, {
+    nome,
+    comentario,
+    img: img || '',
+    ativo: 1
+  });
+}
+
+/**
+ * Atualizar comentário
+ */
+async function atualizarComentario(id, nome, comentario, img, ativo) {
+  return nodeApi.update(TABLE_NAME, id, {
+    nome,
+    comentario,
+    img: img || '',
+    ativo: ativo ? 1 : 0
+  });
+}
+
+/**
+ * Deletar comentário
+ */
+async function deletarComentario(id) {
+  return nodeApi.delete(TABLE_NAME, id);
+}
+
+/**
+ * Listar comentários para home (últimos 5)
+ */
+async function listarComentariosHome() {
+  return nodeApi.advancedSelect({
+    table: TABLE_NAME,
+    where: { ativo: 1 },
+    order_by: 'id DESC',
+    limit: 5
+  });
+}
+
+module.exports = {
+  listarComentarios,
+  listarTodosComentarios,
+  criarComentario,
+  atualizarComentario,
+  deletarComentario,
+  listarComentariosHome
+};
+
+
+
+
+
+
+
+
+/**
+ * ====================================================
+ * MODEL - DASHBOARD (REQUISIÇÕES PARA NODE BACKEND)
+ * ====================================================
+ */
+
+const nodeApi = require('../services/nodeApiClient.service.js');
+
+module.exports = {
+
+  /**
+   * Lucro do dia
+   */
+  async lucroHoje() {
+    const result = await nodeApi.advancedSelect({
+      table: 'agendamentos',
+      alias: 'a',
+      select: ['IFNULL(SUM(s.preco), 0) as total'],
+      joins: [{
+        type: 'INNER',
+        table: 'servicos',
+        alias: 's',
+        on: 'a.servico_id = s.id'
+      }],
+      where: { 'a.status': 'concluido' },
+      where_raw: 'a.data = CURDATE()'
+    });
+    
+    return result[0]?.total || 0;
+  },
+
+  /**
+   * Lucro da semana
+   */
+  async lucroSemana() {
+    const result = await nodeApi.advancedSelect({
+      table: 'agendamentos',
+      alias: 'a',
+      select: ['IFNULL(SUM(s.preco), 0) as total'],
+      joins: [{
+        type: 'INNER',
+        table: 'servicos',
+        alias: 's',
+        on: 'a.servico_id = s.id'
+      }],
+      where: { 'a.status': 'concluido' },
+      where_raw: 'YEARWEEK(a.data, 1) = YEARWEEK(CURDATE(), 1)'
+    });
+    
+    return result[0]?.total || 0;
+  },
+
+  /**
+   * Total de agendamentos hoje
+   */
+  async totalAgendamentosHoje() {
+    const result = await nodeApi.advancedSelect({
+      table: 'agendamentos',
+      select: ['COUNT(*) as total'],
+      where: { 'status': 'agendado' },
+      where_raw: 'data = CURDATE()'
+    });
+    
+    return result[0]?.total || 0;
+  },
+
+  /**
+   * Lista de agendamentos de hoje
+   */
+  async listarAgendaHoje() {
+    return nodeApi.advancedSelect({
+      table: 'agendamentos',
+      alias: 'a',
+      select: [
+        'a.id',
+        'a.hora',
+        'c.nome AS cliente',
+        's.nome AS servico',
+        'p.nome AS profissional',
+        'a.observacoes'
+      ],
+      joins: [
+        {
+          type: 'INNER',
+          table: 'clientes',
+          alias: 'c',
+          on: 'a.cliente_id = c.id'
+        },
+        {
+          type: 'INNER',
+          table: 'servicos',
+          alias: 's',
+          on: 'a.servico_id = s.id'
+        },
+        {
+          type: 'INNER',
+          table: 'profissionais',
+          alias: 'p',
+          on: 'a.profissional_id = p.id'
+        }
+      ],
+      where: { 'a.status': 'agendado' },
+      where_raw: 'a.data = CURDATE()',
+      order_by: 'a.hora ASC'
+    });
+  }
+
+};
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * ====================================================
+ * MODEL - DIAS BLOQUEADOS (REQUISIÇÕES PARA NODE BACKEND)
+ * ====================================================
+ */
+
+const nodeApi = require('../services/nodeApiClient.service.js');
+
+const TABLE_NAME = 'dia_null';
+
+/**
+ * Listar dias bloqueados de um profissional
+ */
+async function listarDiasBloqueados(profissional_id) {
+  const hoje = new Date().toISOString().split('T')[0];
+  
+  return nodeApi.advancedSelect({
+    table: TABLE_NAME,
+    where: { profissional_id },
+    where_raw: `data >= '${hoje}'`,
+    order_by: 'data'
+  });
+}
+
+/**
+ * Criar bloqueio de dia
+ */
+async function criarDiaBloqueado(profissional_id, data, motivo) {
+  const hoje = new Date().toISOString().split('T')[0];
+  
+  if (data < hoje) {
+    throw new Error('Não é possível bloquear datas passadas');
+  }
+  
+  return nodeApi.insert(TABLE_NAME, {
+    profissional_id,
+    data,
+    motivo: motivo || null
+  });
+}
+
+/**
+ * Deletar bloqueio de dia
+ */
+async function deletarDiaBloqueado(id) {
+  return nodeApi.delete(TABLE_NAME, id);
+}
+
+/**
+ * Verificar se um dia está bloqueado
+ */
+async function verificarDiaBloqueado(profissional_id, data) {
+  const result = await nodeApi.get(TABLE_NAME, { profissional_id, data });
+  return result && result.length > 0;
+}
+
+module.exports = {
+  listarDiasBloqueados,
+  criarDiaBloqueado,
+  deletarDiaBloqueado,
+  verificarDiaBloqueado
+};
+
+
+
+
+
+/**
+ * ====================================================
+ * MODEL - HORÁRIOS BLOQUEADOS (REQUISIÇÕES PARA NODE BACKEND)
+ * ====================================================
+ */
+
+const nodeApi = require('../services/nodeApiClient.service.js');
+
+const TABLE_NAME = 'orarios_null';
+
+/**
+ * Listar horários bloqueados
+ */
+async function listarOrariosBloqueados(profissional_id, data) {
+  if (!profissional_id || !data) return [];
+  
+  const hoje = new Date().toISOString().split('T')[0];
+  if (data < hoje) return [];
+  
+  return nodeApi.advancedSelect({
+    table: TABLE_NAME,
+    where: { profissional_id, data },
+    order_by: 'hora'
+  });
+}
+
+/**
+ * Criar bloqueio de horário
+ */
+async function criarHorarioBloqueado(profissional_id, data, hora, motivo) {
+  const hoje = new Date().toISOString().split('T')[0];
+  
+  if (data < hoje) {
+    throw new Error('Não é possível bloquear horários em datas passadas');
+  }
+  
+  return nodeApi.insert(TABLE_NAME, {
+    profissional_id,
+    data,
+    hora,
+    motivo: motivo || null
+  });
+}
+
+/**
+ * Deletar bloqueio de horário
+ */
+async function deletarHorarioBloqueado(id) {
+  return nodeApi.delete(TABLE_NAME, id);
+}
+
+/**
+ * Verificar se uma hora está bloqueada
+ */
+async function verificarHoraBloqueada(profissional_id, data, hora) {
+  const result = await nodeApi.get(TABLE_NAME, { profissional_id, data, hora });
+  return result && result.length > 0;
+}
+
+module.exports = {
+  listarOrariosBloqueados,
+  criarHorarioBloqueado,
+  deletarHorarioBloqueado,
+  verificarHoraBloqueada
+};
+
+
+
+
+
+
+
+
+
+/**
+ * ====================================================
+ * MODEL - PROFISSIONAIS (REQUISIÇÕES PARA NODE BACKEND)
+ * ====================================================
+ */
+
+const nodeApi = require('../services/nodeApiClient.service.js');
+
+const TABLE_NAME = 'profissionais';
+
+/**
+ * Criar novo profissional
+ */
+async function criarProfissional(nome, especialidade, img) {
+  if (!nome || nome.trim() === '') {
+    throw new Error('Nome do profissional é obrigatório');
+  }
+  
+  return nodeApi.insert(TABLE_NAME, {
+    nome: nome.trim(),
+    especialidade: especialidade?.trim() || null,
+    img: img || null,
+    ativo: 1
+  });
+}
+
+/**
+ * Listar profissionais
+ */
+async function listarProfissionais(ativos = true) {
+  return nodeApi.advancedSelect({
+    table: TABLE_NAME,
+    where: { ativo: ativos ? 1 : 0 },
+    order_by: 'nome'
+  });
+}
+
+/**
+ * Buscar profissional por ID
+ */
+async function buscarProfissionalPorId(id) {
+  const result = await nodeApi.get(TABLE_NAME, { id });
+  return result && result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Atualizar profissional
+ */
+async function atualizarProfissional(id, nome, especialidade, img, ativo) {
+  if (!nome || nome.trim() === '') {
+    throw new Error('Nome do profissional é obrigatório');
+  }
+  
+  const data = {
+    nome: nome.trim(),
+    especialidade: especialidade?.trim() || null,
+    ativo: ativo ? 1 : 0
+  };
+  
+  if (img) {
+    data.img = img;
+  }
+  
+  return nodeApi.update(TABLE_NAME, id, data);
+}
+
+/**
+ * Deletar profissional
+ */
+async function deletarProfissional(id) {
+  return nodeApi.delete(TABLE_NAME, id);
+}
+
+/**
+ * Listar profissionais para home
+ */
+async function listarProfissionaisHome() {
+  return listarProfissionais(true);
+}
+
+module.exports = {
+  criarProfissional,
+  listarProfissionais,
+  buscarProfissionalPorId,
+  atualizarProfissional,
+  deletarProfissional,
+  listarProfissionaisHome
+};
+
+
+
+
+
+
+
+
+/**
+ * ====================================================
+ * MODEL - GRADE SEMANAL DOS PROFISSIONAIS (REQUISIÇÕES PARA NODE BACKEND)
+ * ====================================================
+ */
+
+const nodeApi = require('../services/nodeApiClient.service.js');
+
+const TABLE_NAME = 'professional_schedule';
+
+/**
+ * Listar a grade semanal de um profissional
+ */
+async function listarGradeProfissional(profissional_id) {
+  return nodeApi.advancedSelect({
+    table: TABLE_NAME,
+    where: { profissional_id },
+    order_by: 'FIELD(dia_semana, "seg","ter","qua","qui","sex","sab","dom")'
+  });
+}
+
+/**
+ * Listar grade semanal (alias)
+ */
+async function listarProfessionalSchedule(profissional_id) {
+  return listarGradeProfissional(profissional_id);
+}
+
+/**
+ * Criar ou atualizar grade de um dia específico
+ * Como a API Go não tem UPSERT nativo, fazemos:
+ * 1. Buscar se existe
+ * 2. Se existe, UPDATE
+ * 3. Se não existe, INSERT
+ */
+async function criarOuAtualizarGrade(profissional_id, dia_semana, abre, abertura, pausa_inicio, pausa_fim, fechamento) {
+  // Verificar se já existe
+  const existente = await nodeApi.get(TABLE_NAME, { profissional_id, dia_semana });
+  
+  const dados = {
+    abre: abre ? 1 : 0,
+    abertura,
+    pausa_inicio: pausa_inicio || null,
+    pausa_fim: pausa_fim || null,
+    fechamento
+  };
+  
+  if (existente && existente.length > 0) {
+    // UPDATE
+    return nodeApi.update(TABLE_NAME, existente[0].id, dados);
+  } else {
+    // INSERT
+    return nodeApi.insert(TABLE_NAME, {
+      profissional_id,
+      dia_semana,
+      ...dados
+    });
+  }
+}
+
+/**
+ * Deletar grade de um dia específico
+ */
+async function deletarGrade(profissional_id, dia_semana) {
+  // Buscar o ID primeiro
+  const existente = await nodeApi.get(TABLE_NAME, { profissional_id, dia_semana });
+  
+  if (existente && existente.length > 0) {
+    return nodeApi.delete(TABLE_NAME, existente[0].id);
+  }
+}
+
+/**
+ * Atualizar grade semanal completa (recebe dados do formulário)
+ */
+async function atualizarProfessionalSchedule(profissional_id, dados) {
+  const dias = ['seg','ter','qua','qui','sex','sab','dom'];
+  
+  for (let dia of dias) {
+    const abre = dados[`${dia}_abre`] === 'on' ? 1 : 0;
+    const abertura = dados[`${dia}_abertura`] || '09:00:00';
+    const pausa_inicio = dados[`${dia}_pausa_inicio`] || null;
+    const pausa_fim = dados[`${dia}_pausa_fim`] || null;
+    const fechamento = dados[`${dia}_fechamento`] || '18:00:00';
+    
+    await criarOuAtualizarGrade(
+      profissional_id,
+      dia,
+      abre,
+      abertura,
+      pausa_inicio,
+      pausa_fim,
+      fechamento
+    );
+  }
+}
+
+module.exports = {
+  listarGradeProfissional,
+  listarProfessionalSchedule,
+  criarOuAtualizarGrade,
+  deletarGrade,
+  atualizarProfessionalSchedule
+};
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * ====================================================
+ * MODEL - SERVIÇOS (REQUISIÇÕES PARA NODE BACKEND)
+ * ====================================================
+ */
+
+const nodeApi = require('../services/nodeApiClient.service.js');
+
+const TABLE_NAME = 'servicos';
+
+/**
+ * Listar todos os serviços
+ */
+async function listarServicos() {
+  return nodeApi.advancedSelect({
+    table: TABLE_NAME,
+    order_by: 'criado_em DESC'
+  });
+}
+
+/**
+ * Criar novo serviço
+ */
+async function criarServico(nome, duracao_min, preco, img) {
+  return nodeApi.insert(TABLE_NAME, {
+    nome,
+    duracao_min,
+    preco,
+    img: img || null
+  });
+}
+
+/**
+ * Listar serviços para home (todos)
+ */
+async function listarServicosHome() {
+  return listarServicos();
+}
+
+/**
+ * Atualizar serviço
+ */
+async function atualizarServico(id, nome, duracao_min, preco, imgName) {
+  const data = { nome, duracao_min, preco };
+  
+  if (imgName) {
+    data.img = imgName;
+  }
+  
+  return nodeApi.update(TABLE_NAME, id, data);
+}
+
+/**
+ * Deletar serviço
+ */
+async function deletarServico(id) {
+  return nodeApi.delete(TABLE_NAME, id);
+}
+
+module.exports = {
+  listarServicos,
+  criarServico,
+  listarServicosHome,
+  atualizarServico,
+  deletarServico
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * ====================================================
+ * MODEL - TEXTOS DO SITE (REQUISIÇÕES PARA NODE BACKEND)
+ * ====================================================
+ */
+
+const nodeApi = require('../services/nodeApiClient.service.js');
+
+const TABLE_NAME = 'site_texts';
+
+/**
+ * Listar todos os textos do site
+ */
+async function listarTextos() {
+  return nodeApi.get(TABLE_NAME, {});
+}
+
+/**
+ * Buscar texto por chave
+ */
+async function buscarTextoPorKey(key_name) {
+  const result = await nodeApi.get(TABLE_NAME, { key_name });
+  return result && result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Atualizar texto
+ */
+async function atualizarTexto(key_name, value) {
+  // Primeiro busca o ID do registro
+  const texto = await buscarTextoPorKey(key_name);
+  
+  if (!texto) {
+    throw new Error(`Chave ${key_name} não encontrada`);
+  }
+  
+  return nodeApi.update(TABLE_NAME, texto.id, { value });
+}
+
+module.exports = {
+  listarTextos,
+  buscarTextoPorKey,
+  atualizarTexto
+};
+
+
+
+
+
+
+
+
+
+/**
+ * ====================================================
+ * MODEL - HORÁRIOS E AGENDAMENTOS (REQUISIÇÕES PARA NODE BACKEND)
+ * ====================================================
+ */
+
+const nodeApi = require('../services/nodeApiClient.service.js');
+const diaNullModel = require('./diaNullModel.js');
+const orariosNullModel = require('./orariosNullModel.js');
+const professionalScheduleModel = require('./professionalScheduleModel.js');
+
+const TABLE_NAME = 'agendamentos';
+
+/**
+ * Verificar se um horário está agendado
+ */
+async function verificarHorario(profissional_id, data, hora) {
+  const result = await nodeApi.get(TABLE_NAME, {
+    profissional_id,
+    data,
+    hora,
+    status: 'agendado'
+  });
+  
+  return result && result.length > 0;
+}
+
+/**
+ * Criar agendamento
+ */
+async function criarAgendamento(cliente_id, profissional_id, servico_id, data, hora, observacoes = null) {
+  return nodeApi.insert(TABLE_NAME, {
+    cliente_id,
+    profissional_id,
+    servico_id,
+    data,
+    hora,
+    observacoes,
+    status: 'agendado'
+  });
+}
+
+/**
+ * Listar agendamentos de um cliente
+ */
+async function listarPorCliente(cliente_id) {
+  return nodeApi.advancedSelect({
+    table: TABLE_NAME,
+    alias: 'a',
+    select: [
+      'a.id',
+      'DATE_FORMAT(a.data, "%d/%m/%Y") AS data',
+      'DATE_FORMAT(a.hora, "%H:%i") AS hora',
+      'a.status',
+      's.nome AS servico',
+      'p.nome AS profissional'
+    ],
+    joins: [
+      { type: 'INNER', table: 'servicos', alias: 's', on: 'a.servico_id = s.id' },
+      { type: 'INNER', table: 'profissionais', alias: 'p', on: 'a.profissional_id = p.id' }
+    ],
+    where: { 'a.cliente_id': cliente_id },
+    order_by: 'a.data, a.hora'
+  });
+}
+
+/**
+ * Listar agendamentos futuros de um cliente
+ */
+async function listarFuturosPorCliente(cliente_id) {
+  const hoje = new Date().toISOString().split('T')[0];
+  
+  return nodeApi.advancedSelect({
+    table: TABLE_NAME,
+    alias: 'a',
+    select: [
+      'a.id',
+      'a.data',
+      'a.hora',
+      'a.status',
+      'a.observacoes',
+      's.nome AS servico',
+      'p.nome AS profissional'
+    ],
+    joins: [
+      { type: 'INNER', table: 'servicos', alias: 's', on: 'a.servico_id = s.id' },
+      { type: 'INNER', table: 'profissionais', alias: 'p', on: 'a.profissional_id = p.id' }
+    ],
+    where: { 'a.cliente_id': cliente_id, 'a.status': 'agendado' },
+    where_raw: `a.data >= '${hoje}'`,
+    order_by: 'a.data, a.hora'
+  });
+}
+
+/**
+ * Listar horários agendados de um profissional em uma data
+ */
+async function listarHorarios(profissional_id, data) {
+  return nodeApi.advancedSelect({
+    table: TABLE_NAME,
+    alias: 'a',
+    select: [
+      'a.id',
+      'a.hora',
+      'a.status',
+      'c.nome AS cliente_nome'
+    ],
+    joins: [
+      { type: 'INNER', table: 'clientes', alias: 'c', on: 'a.cliente_id = c.id' }
+    ],
+    where: { 'a.profissional_id': profissional_id, 'a.data': data },
+    order_by: 'a.hora'
+  });
+}
+
+/**
+ * Buscar agendamento por ID
+ */
+async function buscarPorId(id) {
+  const result = await nodeApi.get(TABLE_NAME, { id });
+  return result && result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Deletar agendamento
+ */
+async function deletarAgendamento(id) {
+  return nodeApi.delete(TABLE_NAME, id);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * ====================================================
+ * LÓGICA DE HORÁRIOS DISPONÍVEIS
+ * ====================================================
+ */
+
+/**
+ * Função auxiliar para somar minutos a uma hora
+ */
+function horaSoma(horaStr, minutosAdd) {
+  const [h, m] = horaStr.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h);
+  d.setMinutes(m + minutosAdd);
+  return d.toTimeString().split(' ')[0].slice(0,5);
+}
+
+/**
+ * Listar horários disponíveis (para admin)
+ */
+async function listarHorariosDisponiveisAtualizado(profissional_id, data) {
+  // 1️⃣ Verifica se o dia inteiro está bloqueado
+  const diaBloqueado = await diaNullModel.verificarDiaBloqueado(profissional_id, data);
+  if (diaBloqueado) return [];
+  
+  // 2️⃣ Pega o dia da semana
+  const diaSemanaNum = new Date(data + 'T00:00:00').getDay();
+  const mapDias = ['dom','seg','ter','qua','qui','sex','sab'];
+  const diaSemana = mapDias[diaSemanaNum];
+  
+  // 3️⃣ Pega grade semanal do profissional
+  const grade = await professionalScheduleModel.listarGradeProfissional(profissional_id);
+  const diaGrade = grade.find(g => g.dia_semana === diaSemana);
+  
+  if (!diaGrade || diaGrade.abre === 0) return [];
+  
+  // 4️⃣ Monta horários com base na abertura, pausa e fechamento
+  const horarios = [];
+  let horaAtual = diaGrade.abertura;
+  const horaFechamento = diaGrade.fechamento;
+  const intervalo = 30;
+  
+  while (horaAtual < horaFechamento) {
+    // Ignora horário de pausa
+    if (diaGrade.pausa_inicio && diaGrade.pausa_fim) {
+      if (horaAtual >= diaGrade.pausa_inicio && horaAtual < diaGrade.pausa_fim) {
+        horaAtual = diaGrade.pausa_fim;
+        continue;
+      }
+    }
+    
+    horarios.push(horaAtual);
+    horaAtual = horaSoma(horaAtual, intervalo);
+  }
+  
+  // 5️⃣ Busca horários já agendados
+  const agendados = await nodeApi.advancedSelect({
+    table: TABLE_NAME,
+    select: ['hora'],
+    where: { profissional_id, data, status: 'agendado' }
+  });
+  
+  const horasAgendadas = agendados.map(a => a.hora.slice(0,5));
+  
+  // 6️⃣ Remove horários bloqueados (orarios_null)
+  const bloqueios = await orariosNullModel.listarOrariosBloqueados(profissional_id, data);
+  const horasBloqueadas = bloqueios.map(b => b.hora.slice(0,5));
+  
+  // 7️⃣ Filtra horários disponíveis
+  return horarios.filter(h => !horasAgendadas.includes(h) && !horasBloqueadas.includes(h));
+}
+
+/**
+ * Listar horários disponíveis para cliente (com indicação de disponível/agendado)
+ */
+async function listarHorariosDisponiveisCliente(profissional_id, data) {
+  // 1️⃣ Verifica bloqueio de dia
+  const diaBloqueado = await diaNullModel.verificarDiaBloqueado(profissional_id, data);
+  if (diaBloqueado) return [];
+  
+  // 2️⃣ Dia da semana
+  const diaSemanaNum = new Date(data + 'T00:00:00').getDay();
+  const mapDias = ['dom','seg','ter','qua','qui','sex','sab'];
+  const diaSemana = mapDias[diaSemanaNum];
+  
+  // 3️⃣ Grade semanal
+  const grade = await professionalScheduleModel.listarGradeProfissional(profissional_id);
+  const diaGrade = grade.find(g => g.dia_semana === diaSemana);
+  
+  if (!diaGrade || diaGrade.abre === 0) return [];
+  
+  // 4️⃣ Monta horários
+  const horarios = [];
+  let horaAtual = diaGrade.abertura;
+  const horaFechamento = diaGrade.fechamento;
+  const intervalo = 30;
+  
+  while (horaAtual < horaFechamento) {
+    if (diaGrade.pausa_inicio && diaGrade.pausa_fim) {
+      if (horaAtual >= diaGrade.pausa_inicio && horaAtual < diaGrade.pausa_fim) {
+        horaAtual = diaGrade.pausa_fim;
+        continue;
+      }
+    }
+    
+    horarios.push(horaAtual);
+    horaAtual = horaSoma(horaAtual, intervalo);
+  }
+  
+  // 5️⃣ Agendamentos
+  const agendados = await nodeApi.advancedSelect({
+    table: TABLE_NAME,
+    select: ['hora'],
+    where: { profissional_id, data, status: 'agendado' }
+  });
+  
+  const horasAgendadas = agendados.map(a => a.hora.slice(0,5));
+  
+  // 6️⃣ Bloqueios
+  const bloqueios = await orariosNullModel.listarOrariosBloqueados(profissional_id, data);
+  const horasBloqueadas = bloqueios.map(b => b.hora.slice(0,5));
+  
+  // 7️⃣ Monta retorno para o cliente
+  return horarios.map(h => ({
+    hora: h,
+    disponivel: !horasAgendadas.includes(h) && !horasBloqueadas.includes(h),
+    agendamento: horasAgendadas.includes(h) ? { hora: h } : null
+  }));
+}
+
+module.exports = {
+  verificarHorario,
+  criarAgendamento,
+  listarPorCliente,
+  listarFuturosPorCliente,
+  listarHorarios,
+  buscarPorId,
+  deletarAgendamento,
+  listarHorariosDisponiveisAtualizado,
+  listarHorariosDisponiveisCliente
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

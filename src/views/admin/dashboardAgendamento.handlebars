@@ -1,0 +1,291 @@
+<header>
+    <div class="user-info">
+        <p>Bom dia,</p>
+        <h1>{{admin.nome}} 👋</h1>
+    </div>
+    <div class="notification-icon">
+        <i class="ph ph-bell"></i>
+        <div class="badge"></div>
+    </div>
+</header>
+
+<div class="stats-container">
+    <div class="stat-card">
+        <span>Hoje</span>
+        <h2>{{totalHoje}}</h2>
+    </div>
+    <div class="stat-card">
+        <span>Semana</span>
+        <h2>{{totalSemana}}</h2>
+    </div>
+    <div class="stat-card">
+        <span>Agendados no dia</span>
+        <h2 id="totalAgendadosDia">{{agenda.length}}</h2>
+    </div>
+</div>
+
+<div class="quick-menu">
+    <a href="/admin/professionals" class="shortcut">
+        <div class="icon-box"><i class="ph ph-users"></i></div>
+        <span>Equipe</span>
+    </a>
+    <a href="/admin/services" class="shortcut">
+        <div class="icon-box"><i class="ph ph-scissors"></i></div>
+        <span>Serviços</span>
+    </a>
+    <a href="/admin/site-texts" class="shortcut">
+        <div class="icon-box">
+            <i class="ph ph-gear"></i>
+        </div>
+        <span>Configuração</span>
+    </a>
+    <a href="/admin/comments" class="shortcut">
+        <div class="icon-box"><i class="ph ph-chat-circle"></i></div>
+        <span>Feedbacks</span>
+    </a>
+</div>
+
+<section class="agenda-section">
+    <div class="section-header">
+        <h3>Agenda do Dia</h3>
+        <a href="/admin/weekly-agenda"
+           style="color: var(--accent-blue); font-size: 0.8rem; text-decoration: none;">
+            Ver tudo
+        </a>
+    </div>
+
+    <div class="filtros-wrapper" style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <div class="date-filter-wrapper" style="flex: 1;">
+            <i class="fas fa-calendar-alt"></i>
+            <input type="date" id="dataAgendaSelect" value="{{dataSelecionada}}">
+        </div>
+
+        <select id="statusAgendaSelect" class="status-filter-select">
+            <option value="todos" {{#eq statusSelecionado "todos"}}selected{{/eq}}>Todos</option>
+            <option value="agendado" {{#eq statusSelecionado "agendado"}}selected{{/eq}}>Agendado</option>
+            <option value="andamento" {{#eq statusSelecionado "andamento"}}selected{{/eq}}>Em andamento</option>
+            <option value="concluido" {{#eq statusSelecionado "concluido"}}selected{{/eq}}>Concluído</option>
+            <option value="cancelado" {{#eq statusSelecionado "cancelado"}}selected{{/eq}}>Cancelado</option>
+        </select>
+    </div>
+
+    <div class="appointment-list" id="appointmentList">
+
+        {{#if agenda.length}}
+
+            {{#each agenda}}
+            <div class="appointment-item status-{{status}}" data-date="{{data}}" data-time="{{hora}}" data-duration="{{duracao_total}}" data-status="{{status}}">
+                <div class="client-info">
+                    <div class="client-avatar">
+                        {{iniciais cliente}}
+                    </div>
+                    <div class="client-details">
+                        <h4>{{cliente}}</h4>
+                        <p>
+                            {{#each servicos}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+                            ({{duracao_total}} min) • {{profissional}}
+                        </p>
+                        {{#if observacoes}}
+                        <p style="font-size: 0.85rem;color: #555;margin-top: 2px;display: flex;align-items: center;" class="observacoes">
+                            <i style="margin-right: 5px;color:  #0066cc;" class="fas fa-sticky-note"></i> {{observacoes}}
+                        </p>
+                        {{/if}}
+
+                        <div class="countdown-container">
+                            <span class="countdown-text" id="timer-{{id}}">
+                                <i class="fas fa-hourglass-half"></i> Sincronizando...
+                            </span>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" id="bar-{{id}}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="time-tag">{{hora}}</div>
+            </div>
+            {{/each}}
+
+        {{else}}
+            <p class="empty-notice" style="text-align:center; opacity:.6;">
+                Nenhum agendamento para este dia
+            </p>
+        {{/if}}
+
+    </div>
+</section>
+
+<nav class="bottom-nav">
+    <a href="/admin/dashboard" class="nav-item active">
+        <i class="ph ph-house-line"></i>
+        <span>Início</span>
+    </a>
+    <a href="/admin/professionals" class="nav-item">
+        <i class="ph ph-users"></i>
+        <span>Equipe</span>
+    </a>
+    <a href="/admin/site-texts" class="nav-item">
+        <i class="ph ph-layout"></i>
+        <span>Site</span>
+    </a>
+    <a href="/admin/logout" class="nav-item" style="color: var(--danger);">
+        <i class="ph ph-sign-out"></i>
+        <span>Sair</span>
+    </a>
+</nav>
+
+<script>
+function iniciaisJS(nome) {
+    if (!nome) return '';
+    return nome
+        .split(' ')
+        .slice(0, 2)
+        .map(p => p[0])
+        .join('')
+        .toUpperCase();
+}
+
+function montarCardHTML(ag) {
+    const servicosTexto = (ag.servicos || []).join(', ');
+    const observacoesHTML = ag.observacoes ? `
+        <p style="font-size: 0.85rem;color: #555;margin-top: 2px;display: flex;align-items: center;" class="observacoes">
+            <i style="margin-right: 5px;color:  #0066cc;" class="fas fa-sticky-note"></i> ${ag.observacoes}
+        </p>
+    ` : '';
+
+    return `
+        <div class="appointment-item status-${ag.status}" data-date="${ag.data}" data-time="${ag.hora}" data-duration="${ag.duracao_total}" data-status="${ag.status}">
+            <div class="client-info">
+                <div class="client-avatar">${iniciaisJS(ag.cliente)}</div>
+                <div class="client-details">
+                    <h4>${ag.cliente}</h4>
+                    <p>${servicosTexto} (${ag.duracao_total} min) • ${ag.profissional}</p>
+                    ${observacoesHTML}
+                    <div class="countdown-container">
+                        <span class="countdown-text" id="timer-${ag.id}">
+                            <i class="fas fa-hourglass-half"></i> Sincronizando...
+                        </span>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="bar-${ag.id}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="time-tag">${ag.hora}</div>
+        </div>
+    `;
+}
+
+// ============================================================
+// Busca a agenda da data + status selecionados via AJAX
+// ============================================================
+async function atualizarAgenda() {
+    const dataSelect = document.getElementById('dataAgendaSelect');
+    const statusSelect = document.getElementById('statusAgendaSelect');
+    const list = document.getElementById('appointmentList');
+    const totalDisplay = document.getElementById('totalAgendadosDia');
+
+    const dataValue = dataSelect.value;
+    const statusValue = statusSelect.value;
+    if (!dataValue) return;
+
+    list.innerHTML = '<p style="text-align:center; opacity:.6;"><i class="fas fa-circle-notch fa-spin"></i> Carregando...</p>';
+
+    try {
+        const response = await fetch(`/admin/ajax/agenda?data=${dataValue}&status=${statusValue}`);
+        if (!response.ok) throw new Error('Erro na requisição');
+
+        const resultado = await response.json();
+
+        totalDisplay.textContent = resultado.total;
+
+        if (!resultado.agenda || resultado.agenda.length === 0) {
+            list.innerHTML = '<p class="empty-notice" style="text-align:center; opacity:.6;">Nenhum agendamento para este dia</p>';
+            return;
+        }
+
+        list.innerHTML = resultado.agenda.map(montarCardHTML).join('');
+
+        updateAppointments();
+
+    } catch (error) {
+        console.error('Erro ao atualizar agenda:', error);
+        list.innerHTML = '<p style="text-align:center; color:var(--danger, #ff5555);">Erro ao carregar agenda.</p>';
+    }
+}
+
+document.getElementById('dataAgendaSelect').addEventListener('change', atualizarAgenda);
+document.getElementById('statusAgendaSelect').addEventListener('change', atualizarAgenda);
+
+// ============================================================
+// Contagem regressiva / progresso de cada agendamento
+// ============================================================
+function updateAppointments() {
+  const list = document.querySelector('.appointment-list');
+  if (!list) return;
+
+  const cards = Array.from(list.querySelectorAll('.appointment-item'));
+  const finished = [];
+
+  cards.forEach(card => {
+    const dateStr = card.getAttribute('data-date');
+    const timeStr = card.getAttribute('data-time');
+    const duracao = parseInt(card.getAttribute('data-duration'), 10) || 0;
+    const timerDisplay = card.querySelector('.countdown-text');
+    const barFill = card.querySelector('.progress-bar-fill');
+    if (!timerDisplay || !barFill) return;
+
+    const startDate = new Date(`${dateStr}T${timeStr}`);
+    const endDate = new Date(startDate.getTime() + duracao * 60000);
+    const now = new Date();
+
+    if (now < startDate) {
+      card.classList.remove('in-progress', 'finished');
+
+      const diff = startDate - now;
+      const h = Math.floor(diff / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((diff % (1000 * 60)) / 1000);
+      timerDisplay.innerHTML = `<i class="fas fa-history"></i> Faltam ${h}h ${m}m ${s}s`;
+
+      const totalWindow = 2 * 60 * 60 * 1000;
+      let progress = 100 - (diff / totalWindow * 100);
+      if (progress < 5) progress = 5;
+      if (progress > 100) progress = 100;
+
+      barFill.style.width = progress + "%";
+      barFill.style.background = "var(--accent-blue)";
+    }
+
+    else if (now >= startDate && now < endDate) {
+      card.classList.add('in-progress');
+      card.classList.remove('finished');
+
+      const totalDuration = endDate - startDate;
+      const elapsed = now - startDate;
+      let progress = (elapsed / totalDuration) * 100;
+      if (progress > 100) progress = 100;
+
+      timerDisplay.innerHTML = `<i class="fas fa-cut"></i> Corte em andamento`;
+      barFill.style.width = progress + "%";
+      barFill.style.background = "var(--success, #2ecc71)";
+    }
+
+    else {
+      card.classList.add('finished');
+      card.classList.remove('in-progress');
+
+      timerDisplay.innerHTML = `<i class="fas fa-check-double"></i> Finalizado`;
+      barFill.style.width = "100%";
+      barFill.style.background = "#555";
+
+      finished.push(card);
+    }
+  });
+
+  finished
+    .sort((a, b) => a.getAttribute('data-time').localeCompare(b.getAttribute('data-time')))
+    .forEach(card => list.appendChild(card));
+}
+setInterval(updateAppointments, 1000);
+updateAppointments();
+</script>

@@ -1,0 +1,106 @@
+src/views/admin/manageProfessionals.handlebars
+<div class="container">
+    <div class="nav-header">
+        <h2>Profissionais</h2>
+        <button class="btn-voltar" onclick="window.history.back();">
+            <i data-lucide="arrow-left" style="width:16px"></i> Painel
+        </button>
+    </div>
+
+    {{#if error}}
+        <div class="msg msg-error">{{error}}</div>
+    {{/if}}
+    {{#if success}}
+        <div class="msg msg-success">{{success}}</div>
+    {{/if}}
+
+    <span class="section-title">Novo Cadastro</span>
+    <div class="card-add">
+        <form action="/admin/professionals" enctype="multipart/form-data" method="POST">
+            <div class="form-group">
+                <label>Nome Completo</label>
+                <input type="text" name="nome" required placeholder="Ex: Dr. Roberto Silva">
+            </div>
+            <div class="form-group">
+                <label>Especialidade</label>
+                <input type="text" name="especialidade" placeholder="Ex: Fisioterapeuta">
+            </div>
+            <div class="form-group">
+                <label>Foto de Perfil</label>
+                <input type="file" name="imagem" style="font-size: 12px;">
+            </div>
+            <button type="submit" class="btn-add">Cadastrar Profissional</button>
+        </form>
+    </div>
+
+    <span class="section-title">Equipe Cadastrada</span>
+    
+    {{#each profissionais}}
+    <div class="pro-card">
+        <form action="/admin/professionals/update" enctype="multipart/form-data" method="POST">
+            <input type="hidden" name="id" value="{{this.id}}">
+            
+            <div class="pro-header">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:40px; height:40px; background:#1a1a1a; border-radius:50%; display:flex; align-items:center; justify-content:center; border:1px solid var(--border);">
+                        <i data-lucide="user" style="width:20px; color:var(--text-dim)"></i>
+                    </div>
+                    <span style="font-weight:600;">Editor de Perfil</span>
+                </div>
+                <div class="active-toggle">
+                    <span>Ativo</span>
+                    <input type="checkbox" name="ativo" {{#if this.ativo}}checked{{/if}}>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Nome</label>
+                <input type="text" name="nome" value="{{this.nome}}" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Especialidade</label>
+                <input type="text" name="especialidade" value="{{this.especialidade}}">
+            </div>
+            <div class="img-preview-container">
+                {{#if this.img}}
+                    <img src="{{this.img}}" alt="Perfil" width="50" height="50">
+                    <input type="hidden" name="imagem" value="{{this.img}}">
+                    <span style="font-size:12px; color:var(--text-dim)">Imagem ativa</span>
+                {{else}}
+                    <div style="width:50px; height:50px; background:#1a1a1a; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                        <i data-lucide="user" style="width:20px; color:#444"></i>
+                    </div>
+                    <span style="font-size:12px; color:var(--text-dim)">Sem foto</span>
+                {{/if}}
+            </div>
+
+            <div class="form-group">
+                <label>Atualizar Foto</label>
+                <input type="file" name="img" style="font-size: 11px;">
+            </div>
+
+            <div class="actions-grid">
+                <button type="submit" class="btn-action btn-update">
+                    <i data-lucide="save" style="width:14px"></i> Salvar
+                </button>
+                
+                <a href="/admin/professionals/schedule/{{this.id}}" class="btn-action btn-schedule">
+                    <i data-lucide="calendar" style="width:14px"></i> Horários
+                </a>
+
+                <a href="/admin/professionals/delete/{{this.id}}" 
+                   class="btn-action btn-delete" 
+                   onclick="return confirm('Tem certeza que deseja excluir?')">
+                   <i data-lucide="trash-2" style="width:12px"></i> Excluir Registro
+                </a>
+            </div>
+        </form>
+    </div>
+    {{/each}}
+    
+</div>
+
+<script>
+    lucide.createIcons();
+</script>

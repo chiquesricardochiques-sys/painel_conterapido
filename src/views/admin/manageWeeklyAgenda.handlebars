@@ -1,0 +1,58 @@
+src/views/admin/manageWeeklyAgenda.handlebars
+<div class="container">
+    <div class="filter-panel">
+        <h1>Agenda Semanal</h1>
+        <form method="GET" action="/admin/weekly-agenda">
+            <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 5px; display: block;">PROFISSIONAL EM FOCO</label>
+            <select name="profissional_id">
+                {{#each profissionais}}
+                <option value="{{this.id}}" {{#ifEquals this.id ../profissional_id}}selected{{/ifEquals}}>{{this.nome}}</option>
+                {{/each}}
+            </select>
+            <button type="submit" class="btn-filter">Sincronizar Agenda</button>
+        </form>
+    </div>
+
+    {{#each semana}}
+    <div class="day-section">
+        <div class="day-header">
+            <span class="day-name">{{diaSemana}}</span>
+            <span class="day-date">{{data}}</span>
+        </div>
+
+        {{#if isDiaBloqueado}}
+            <div class="blocked-badge">
+                <i data-lucide="shield-off"></i>
+                Este dia está completamente bloqueado no sistema.
+            </div>
+        {{else}}
+            <div class="timeline">
+                {{#each horariosDisponiveis}}
+                    <div class="time-slot">
+                        <span class="time-label">{{this.hora}}</span>
+
+                        {{#if this.bloqueada}}
+                            <div class="slot-content slot-blocked">
+                                Horário Restrito
+                            </div>
+                        {{else if this.agendamento}}
+                            <div class="slot-content slot-booked">
+                                Cliente: {{this.agendamento.cliente_nome}}
+                            </div>
+                        {{else}}
+                            <div class="slot-content slot-available">
+                                Disponível
+                            </div>
+                        {{/if}}
+                    </div>
+                    {{/each}}
+
+            </div>
+        {{/if}}
+    </div>
+    {{/each}}
+</div>
+
+<script>
+    lucide.createIcons();
+</script>

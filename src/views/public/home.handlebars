@@ -1,0 +1,215 @@
+
+  
+
+<main>
+    <section class="hero-banner">
+        <article>
+            <!-- Imagens de Fundo -->
+            <img class="img_prinsipal img1" src="{{textos.mainbanner_img1}}" alt="">
+            <img class="img_prinsipal img2" src="{{textos.mainbanner_img2}}" alt="">
+            <img class="img_prinsipal img3" src="{{textos.mainbanner_img3}}" alt="">
+
+            <!-- Camada de escurecimento para garantir contraste (Overlay) -->
+            <div class="hero-overlay"></div>
+
+            <!-- NOVO CONTAINER: Agrupa texto e botões para centralizar juntos -->
+            <div class="hero-content">
+                <div class="inf">
+                    <h1>{{textos.mainbanner_heading}}</h1>
+                    <p>{{textos.mainbanner_subheading}}</p>
+                </div>
+
+                <div class="btns">
+                    <a href="/register" class="a1">Criar Conta</a>
+                    <a href="/login" class="a2">Entrar</a>
+                </div>
+            </div>
+        </article>
+    </section>
+
+  <section class="servisos">
+    <h2>Serviços</h2>
+    <div class="contern-servises">
+          <div class="box">
+              {{#each servicos}}
+                <div class="item">
+                  <div class="img">
+                    <img src="{{this.img}}" alt="{{this.nome}}">
+                  </div>
+                  <div class="information">
+                    <h1>{{this.nome}}</h1>
+                    
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+
+          <div class="btns2">
+              <div class="btn b_1"></div>
+              <div class="btn b_2"></div>
+          </div>
+
+    </div>
+
+  </section>
+  
+  <div class="container-html">
+    <section class="profisionais">
+        <h1>Equipe de Elite</h1>
+
+        <section class="bazaComentarios">
+            <div class="prala" id="prevBtn"><i class="bi bi-chevron-right"></i></div>
+            <div class="praca" id="nextBtn"><i class="bi bi-chevron-right"></i></div>
+            
+            <div class="baze">
+                {{#each profissionais}}
+                  <section class="content">
+                    <div class="img">
+                      <img src="{{this.img}}" alt="{{this.nome}}">
+                    </div>
+                    <div class="desc">
+                      <h1>{{this.nome}}</h1>
+                      <p>{{this.especialidade}}</p>
+                    </div>
+                  </section>
+                {{/each}}
+                
+            </div>
+        </section>
+    </section>
+</div>
+
+
+  <!-- comentarios -->
+  
+<section class="comentarios">
+    <h1><i class="bi bi-rocket"></i> Comentários</h1>
+    
+    <div class="base_coments">
+        {{#each comentarios}}
+        <div class="item_coment">
+            <div class="icones_acresentados">
+                <i class="bi bi-lightning-fill icon_a"></i>
+                <i class="bi bi-patch-check-fill"></i>
+            </div>
+
+            <div class="img">
+                <img src="{{this.img}}" alt="{{this.nome}}">
+            </div>
+
+            <div class="descricao">
+                <h1>{{this.nome}}</h1>
+                <p>{{this.comentario}}</p>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+</section>
+
+  
+
+    <script>
+
+        let b_1 =  document.querySelector(".b_1")
+        let b_2 =  document.querySelector(".b_2")
+        let box = document.querySelector(".box")
+
+        let degres = 0
+
+        b_2.addEventListener("click", function (){
+            let items=[...document.querySelectorAll(".item")]
+            document.querySelector(".box").appendChild(items[0])
+        })
+        b_1.addEventListener("click", function (){
+            let items=[...document.querySelectorAll(".item")]
+            document.querySelector(".box").prepend(items[((items.length) - 1)])
+        })
+
+
+
+
+
+        const parala  =document.querySelector(".prala")
+        const paraca  =document.querySelector(".praca")
+        paraca.addEventListener("click",function(){
+            let items  = [...document.querySelectorAll(".content")]
+            document.querySelector(".baze").appendChild(items[0])
+            
+        })
+        parala.addEventListener("click",function(){
+            let items  = [...document.querySelectorAll(".content")]
+            document.querySelector(".baze").prepend(items[((items.length)-1)])
+            
+        })
+    const slides = document.querySelectorAll('.content');
+    const nextBtn = document.getElementById('nextBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    let currentIdx = 0;
+    let timer;
+
+    function dispararVibracao() {
+        nextBtn.classList.add('vibrar-dir');
+        prevBtn.classList.add('vibrar-esq');
+        setTimeout(() => {
+            nextBtn.classList.remove('vibrar-dir');
+            prevBtn.classList.remove('vibrar-esq');
+        }, 400);
+    }
+
+    function showSlide(index) {
+        slides.forEach(s => s.classList.remove('active'));
+        slides[index].classList.add('active');
+        currentIdx = index;
+        dispararVibracao();
+    }
+
+    function nextSlide() {
+        let index = (currentIdx + 1) % slides.length;
+        showSlide(index);
+    }
+
+    function startAutoPlay() {
+        if (slides.length > 1) {
+            timer = setInterval(nextSlide, 5000);
+        }
+    }
+
+    function resetTimer() {
+        clearInterval(timer);
+        startAutoPlay();
+    }
+
+    nextBtn.addEventListener('click', () => {
+        nextSlide();
+        resetTimer();
+    });
+
+    prevBtn.addEventListener('click', () => {
+        let index = (currentIdx - 1 + slides.length) % slides.length;
+        showSlide(index);
+        resetTimer();
+    });
+
+    startAutoPlay();
+
+
+
+
+        let ele_1 = document.querySelector(".ele_1")
+        let ele_2 = document.querySelector(".ele_2")
+        ele_2.addEventListener("click", function (){
+            let items=[...document.querySelectorAll(".item")]
+            document.querySelector(".box").appendChild(items[0])
+        })
+        ele_1.addEventListener("click", function (){
+            let items=[...document.querySelectorAll(".item")]
+            document.querySelector(".box").prepend(items[((items.length) - 1)])
+        })
+        const items = [...document.querySelectorAll(".items")]
+        
+        items.forEach((e)=>{
+          e.addEventListener("click",(evt)=>{
+            e.children[1].classList.toggle("evnt")
+          })
+        })
+    </script>

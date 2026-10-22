@@ -1,0 +1,159 @@
+<h1 style="text-align: center; color: white;">MEUS HORÁRIOS</h1>
+{{#if success}}
+  <div class="message success">{{success}}</div>
+{{/if}}
+
+{{#if error}}
+  <div class="message error">{{error}}</div>
+{{/if}}
+
+<ul>
+  {{#each agendamentos}}
+
+    <li class="schedule-card" data-date="{{dataTime}}" data-time="{{hora}}" data-duration="{{duracao_total}}">
+
+      <div class="main-info">
+        <i class="far fa-calendar-check"></i> {{data}} às {{hora}}
+      </div>
+
+      <div class="sub-info">
+        <i class="fas fa-cut"></i>
+        <span>
+          <strong>Serviço{{#if (gt servicos.length 1)}}s{{/if}}:</strong>
+          {{#each servicos}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+        </span>
+      </div>
+
+      <div class="sub-info">
+        <i class="fas fa-user-tie"></i> <span><strong>Com:</strong> {{profissional}}</span>
+      </div>
+
+      <div class="countdown-container">
+        <span class="countdown-text" id="timer-{{id}}">
+            <i class="fas fa-hourglass-half"></i> Sincronizando...
+        </span>
+      {{#if observacoes}}
+        <div class="sub-info">
+          <i class="fas fa-sticky-note"></i>
+          <span>
+            <strong>Obs:</strong>
+            <em>{{observacoes}}</em>
+
+          </span>
+        </div>
+      {{/if}}
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="bar-{{id}}"></div>
+        </div>
+      </div>
+
+      <form method="POST" action="/client/my-schedules/delete" onsubmit="return confirm('Deseja realmente cancelar seu horário?');">
+        <input type="hidden" name="agendamento_id" value="{{id}}">
+        <button type="submit" class="btn-delete">
+            <i class="fas fa-times-circle"></i> Cancelar Agendamento
+        </button>
+      </form>
+    </li>
+  {{/each}}
+
+  {{#unless agendamentos.length}}
+    <li class="empty-message">
+        <i class="fas fa-calendar-day" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+        Você não possui agendamentos.
+    </li>
+  {{/unless}}
+</ul>
+
+<script>
+  function updateCounters() {
+    const list = document.querySelector('ul');
+    const cards = Array.from(document.querySelectorAll('.schedule-card'));
+    const finished = [];
+
+    cards.forEach(card => {
+      const dateStr = card.getAttribute('data-date');
+      const timeStr = card.getAttribute('data-time');
+      const duracao = parseInt(card.getAttribute('data-duration'), 10) || 0;
+      const timerDisplay = card.querySelector('.countdown-text');
+      const barFill = card.querySelector('.progress-bar-fill');
+
+      const startDate = new Date(`${dateStr}T${timeStr}`);
+      const endDate = new Date(startDate.getTime() + duracao * 60000);
+      const now = new Date();
+
+      // -------------------------------------------------
+      // ESTADO 1: ainda não chegou a hora do corte
+      // -------------------------------------------------
+      if (now < startDate) {
+        card.classList.remove('in-progress', 'finished');
+
+        const diff = startDate - now;
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+        let timeLeft = "Faltam: ";
+        if (d > 0) timeLeft += `${d}d `;
+        timeLeft += `${h}h ${m}m ${s}s`;
+        timerDisplay.innerHTML = `<i class="fas fa-history"></i> ${timeLeft}`;
+
+        const totalWindow = 24 * 60 * 60 * 1000;
+        let progress = 100 - (diff / totalWindow * 100);
+        if (progress < 5) progress = 5;
+        if (progress > 100) progress = 100;
+
+        barFill.style.width = progress + "%";
+        barFill.style.background = "var(--neon-blue)";
+
+        if (diff < (1000 * 60 * 60)) {
+          barFill.style.boxShadow = (s % 2 === 0) ? "0 0 20px var(--neon-blue)" : "0 0 5px var(--neon-blue)";
+        } else {
+          barFill.style.boxShadow = "none";
+        }
+      }
+
+      // -------------------------------------------------
+      // ESTADO 2: hora_agendamento <= agora < hora_agendamento + duração
+      // -------------------------------------------------
+      else if (now >= startDate && now < endDate) {
+        card.classList.add('in-progress');
+        card.classList.remove('finished');
+
+        const totalDuration = endDate - startDate;
+        const elapsed = now - startDate;
+        let progress = (elapsed / totalDuration) * 100;
+        if (progress > 100) progress = 100;
+
+        timerDisplay.innerHTML = `<i class="fas fa-cut"></i> Corte em andamento`;
+        barFill.style.width = progress + "%";
+        barFill.style.background = "var(--success, #2ecc71)";
+        barFill.style.boxShadow = "0 0 12px var(--success, #2ecc71)";
+      }
+
+      // -------------------------------------------------
+      // ESTADO 3: agora >= hora_agendamento + duração -> já cortado
+      // -------------------------------------------------
+      else {
+        card.classList.add('finished');
+        card.classList.remove('in-progress');
+
+        timerDisplay.innerHTML = `<i class="fas fa-check-double"></i> Corte finalizado`;
+        barFill.style.width = "100%";
+        barFill.style.background = "#555";
+        barFill.style.boxShadow = "none";
+
+        finished.push(card);
+      }
+    });
+
+    // Manda os finalizados pro final da lista, ordenados por horário
+    finished
+      .sort((a, b) => a.getAttribute('data-time').localeCompare(b.getAttribute('data-time')))
+      .forEach(card => list.appendChild(card));
+  }
+
+  // Execução
+  setInterval(updateCounters, 1000);
+  updateCounters();
+</script>

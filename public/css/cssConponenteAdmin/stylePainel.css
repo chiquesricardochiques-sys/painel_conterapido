@@ -1,0 +1,511 @@
+.painel {
+  --bg: #0f1218;
+  --card: #181d26;
+  --primary: #00e5ff;
+  --danger: #ff4d6d;
+  --success: #00c853;
+  --warning: #ffab00;
+  --text: #f1f5f9;
+  --soft: #94a3b8;
+  --line: #27303f;
+
+  max-width: 1400px;
+  margin: 80px auto; /* 👈 Margem de 32px no topo e embaixo para afastar do teto da tela */
+  padding: 24px;      /* 👈 Respiro interno maior */
+  background: var(--bg);
+  border-radius: 24px;
+  color: var(--text);
+  box-sizing: border-box;
+  
+  /* Sombra geral do painel flutuando na tela */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.painel *,
+.painel *::before,
+.painel *::after { box-sizing: border-box; }
+
+.painel a { text-decoration: none; }
+
+.painel-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ---------- TOPO ---------- */
+
+.painel-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.painel-salao {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.painel-logo {
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: var(--primary);
+  color: #000;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 1.3rem;
+  box-shadow: 0 4px 12px rgba(0, 229, 255, 0.2);
+}
+
+.painel-salao h1 { margin: 0; font-size: 1.3rem; font-weight: 800; color: #fff; }
+.painel-salao p { margin: 3px 0 0; color: var(--soft); font-size: 0.85rem; }
+
+.painel-acoes { display: flex; gap: 10px; flex: 0 0 auto; }
+
+.painel-sair {
+  border: 1px solid var(--line);
+  cursor: pointer;
+  font: inherit;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.2s;
+}
+
+.painel-sair:hover { background: rgba(255, 255, 255, 0.08); }
+
+/* ---------- DIA + BUSCA ---------- */
+
+.dia-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dia-seta {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  transition: background 0.2s;
+}
+
+.dia-seta:hover { background: rgba(255, 255, 255, 0.08); }
+
+.dia-centro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.dia-semana { color: var(--soft); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+.dia-data { font-size: 1.4rem; font-weight: 900; color: #fff; }
+
+.dia-hoje {
+  color: var(--primary);
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  background: rgba(0, 229, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.dia-ir-hoje { color: var(--primary); font-size: 0.8rem; font-weight: 700; }
+
+.dia-busca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.dia-busca label { color: var(--soft); font-size: 0.82rem; font-weight: 700; }
+
+.dia-busca input[type="date"] {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text);
+  font-size: 0.95rem;
+  outline: none;
+}
+
+/* CHIPS DE PROFISSIONAIS */
+
+.chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-top: 14px;
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.chip {
+  flex: 0 0 auto;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+.chip-ativo {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #000;
+}
+
+/* ---------- FILTROS DE STATUS ---------- */
+
+.filtros {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+}
+
+.filtro {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filtro-n {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+.filtro-ativo {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #000;
+}
+
+.filtro-ativo .filtro-n {
+  background: rgba(0, 0, 0, 0.2);
+  color: #000;
+}
+
+.painel-status {
+  margin: 2px 0 14px;
+  text-align: center;
+  color: var(--soft);
+  font-size: 0.78rem;
+}
+
+.painel-status.offline { color: var(--danger); font-weight: 700; }
+
+/* ---------- AGENDA / CARDS 3D PROFISSIONAIS (SEM MIMIMI) ---------- */
+
+.agenda { list-style: none; margin: 0; padding: 0; }
+
+.ag {
+  display: flex;
+  align-items: stretch;
+  background: var(--card);
+  
+  /* Efeito 3D: Borda superior iluminada + Sombra profunda em camadas */
+  border: 1px solid var(--line);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.4),
+    0 6px 16px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ag:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.5),
+    0 10px 22px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border-color: rgba(0, 229, 255, 0.3);
+}
+
+/* Bloco de Horário Esquerdo com relevo 3D */
+.ag-hora {
+  flex: 0 0 100px;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.2) 100%);
+  border-right: 1px solid var(--line);
+}
+
+.ag-hora strong { display: block; font-size: 1.15rem; font-weight: 900; color: #fff; letter-spacing: -0.02em; }
+.ag-hora span { display: block; margin-top: 2px; color: var(--soft); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+
+/* Corpo horizontal */
+.ag-corpo { 
+  flex: 1; 
+  min-width: 0; 
+  padding: 12px 18px; 
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ag-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ag-topo h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Status Badges Nítidos e Sóbrios */
+.status {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-pendente { background: rgba(255, 171, 0, 0.12); color: var(--warning); border: 1px solid rgba(255, 171, 0, 0.2); }
+.status-confirmado { background: rgba(0, 200, 83, 0.12); color: var(--success); border: 1px solid rgba(0, 200, 83, 0.2); }
+.status-concluido { background: rgba(0, 229, 255, 0.12); color: var(--primary); border: 1px solid rgba(0, 229, 255, 0.2); }
+.status-cancelado { background: rgba(255, 77, 109, 0.12); color: var(--danger); border: 1px solid rgba(255, 77, 109, 0.2); }
+.status-nao_compareceu { background: rgba(255, 255, 255, 0.04); color: var(--soft); border: 1px solid var(--line); }
+
+.ag-dica { margin: 3px 0 0; font-size: 0.78rem; font-weight: 700; color: var(--soft); }
+
+/* Serviço com visual limpo de painel corporativo */
+.ag-servico-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 4px;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  width: fit-content;
+}
+
+/* Metadados */
+.ag-meta { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 4px 22px; 
+  margin-top: 6px; 
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--soft);
+}
+
+.meta-icone {
+  font-size: 0.85rem;
+}
+
+/* Observações mais maduras */
+.ag-obs {
+  margin-top: 6px;
+  padding: 5px 10px;
+  background: rgba(255, 171, 0, 0.06);
+  border-left: 2px solid var(--warning);
+  border-radius: 0 4px 4px 0;
+  font-size: 0.78rem;
+  color: var(--text);
+  width: fit-content;
+}
+
+.ag-obs strong {
+  color: var(--warning);
+  font-weight: 700;
+}
+
+/* Barra de progresso 3D */
+.ag-progresso {
+  height: 5px;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ag-progresso-barra {
+  height: 100%;
+  background: var(--success);
+  border-radius: 999px;
+  transition: width 1s linear;
+}
+
+/* Situações dinâmicas com reforço 3D nas bordas */
+.ag-na-hora { 
+  border-color: var(--warning); 
+  background: linear-gradient(90deg, rgba(255, 171, 0, 0.08) 0%, var(--card) 40%);
+}
+.ag-na-hora .ag-hora { background: var(--warning); }
+.ag-na-hora .ag-hora strong, .ag-na-hora .ag-hora span { color: #000; }
+
+.ag-em-atendimento { 
+  border-color: var(--success); 
+  background: linear-gradient(90deg, rgba(0, 200, 83, 0.08) 0%, var(--card) 40%);
+}
+.ag-em-atendimento .ag-hora { background: var(--success); }
+.ag-em-atendimento .ag-hora strong, .ag-em-atendimento .ag-hora span { color: #000; }
+
+.ag-atrasado { 
+  border-color: var(--danger); 
+  background: linear-gradient(90deg, rgba(255, 77, 109, 0.08) 0%, var(--card) 40%);
+}
+.ag-atrasado .ag-hora { background: var(--danger); }
+.ag-atrasado .ag-hora strong, .ag-atrasado .ag-hora span { color: #fff; }
+
+.ag-concluido .ag-hora { background: rgba(0, 229, 255, 0.06); }
+.ag-cancelado, .ag-nao_compareceu { opacity: 0.45; filter: grayscale(20%); }
+
+/* Vazio / Erro */
+.painel-vazio { text-align: center; padding: 28px 16px; }
+.painel-vazio-icone { font-size: 2rem; }
+.painel-vazio h3 { margin: 8px 0 2px; font-size: 1rem; color: #fff; }
+.painel-vazio p { margin: 0; color: var(--soft); font-size: 0.85rem; }
+
+.painel-erro { text-align: center; }
+.painel-erro p { color: var(--danger); font-weight: 600; margin: 0 0 12px; }
+.painel-erro-acoes { display: flex; gap: 10px; justify-content: center; }
+
+.painel-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #000;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.painel-btn-sec { background: rgba(255, 255, 255, 0.05); color: var(--text); border: 1px solid var(--line); }
+
+
+/* ======================================================
+   RESPONSIVIDADE (TVs Grandes, Médias, Pequenas e Mobile)
+   ====================================================== */
+
+/* 1. TVs Grandes / Monitores 55"+ */
+@media (min-width: 1400px) {
+  .painel { max-width: 1600px; padding: 28px; }
+  .ag { margin-bottom: 14px; border-radius: 14px; }
+  .ag-hora { flex-basis: 130px; padding: 16px; }
+  .ag-hora strong { font-size: 1.5rem; }
+  .ag-corpo { padding: 16px 24px; }
+  .ag-topo h3 { font-size: 1.25rem; }
+  .ag-servico-badge { font-size: 1rem; }
+  .meta-item { font-size: 0.9rem; }
+}
+
+/* 2. TVs Médias (40" a 50") */
+@media (min-width: 1024px) and (max-width: 1399px) {
+  .painel { max-width: 1200px; }
+  .ag-hora { flex-basis: 110px; }
+  .ag-hora strong { font-size: 1.25rem; }
+  .ag-topo h3 { font-size: 1.1rem; }
+}
+
+/* 3. TVs Pequenas / Tablets de Parede (24" a 32") */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .painel { max-width: 100%; padding: 14px; }
+  .ag-hora { flex-basis: 95px; }
+  .ag-hora strong { font-size: 1.05rem; }
+  .ag-meta { gap: 4px 16px; }
+}
+
+/* 4. Celulares e Smartphones */
+@media (max-width: 599px) {
+  .painel { padding: 10px; border-radius: 14px; }
+  .painel-topo { flex-direction: column; align-items: stretch; }
+  .painel-acoes { justify-content: space-between; }
+  .dia-busca { flex-wrap: wrap; }
+  .dia-busca input[type="date"] { flex-basis: 100%; }
+  
+  .ag { flex-direction: row; }
+  .ag-hora { flex-basis: 75px; padding: 10px 4px; }
+  .ag-hora strong { font-size: 0.95rem; }
+  .ag-hora span { font-size: 0.6rem; }
+  .ag-corpo { padding: 10px 12px; }
+  .ag-topo h3 { font-size: 0.95rem; }
+  .ag-meta { gap: 2px 12px; }
+  .meta-item { font-size: 0.75rem; }
+}

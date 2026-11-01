@@ -1,18 +1,463 @@
-<div class="dashboard-container">
-    <h1>Painel Administrativo</h1>
+<div class="painel">
 
-    <p>Bem-vindo, {{admin.nome}}!</p>
+    {{#if erro}}
 
-    <ul class="prinsipal">
-        <li><a href="/admin/admins">Administradores</a></li>
-        <li><a href="/admin/professionals">Gerenciar Profissionais</a></li>
-        <li><a href="/admin/services">Gerenciar Serviços</a></li>
-        <li><a href="/admin/hours">Gerenciar Horários</a></li>
-        <li><a href="/admin/blocks">Bloquear Dias/Horários</a></li> 
-        <li><a href="/admin/mostrarDashboardAgendamentos">dshibord client</a></li> 
-        <li><a href="/admin/comments">Gerenciar Comentários</a></li>
-        <li><a href="/admin/weekly-agenda">Visualizar Agenda Semanal</a></li>
-        <li><a href="/admin/site-texts">Configurar Public Home</a></li>
-        <li><a href="/admin/logout">Sair</a></li>
-    </ul>
+        <section class="painel-card painel-erro">
+            <p>{{erro}}</p>
+
+            <div class="painel-erro-acoes">
+                <a href="/admin/dashboard" class="painel-btn">Tentar novamente</a>
+                <a href="/admin/logout" class="painel-btn painel-btn-sec">Sair</a>
+            </div>
+        </section>
+
+    {{else}}
+
+        <!-- ======================================================
+             TOPO: SALÃO
+             ====================================================== -->
+        <header class="painel-card painel-topo">
+            <div class="painel-salao">
+                {{#if salao.logo_url}}
+                    <img class="painel-logo" src="{{salao.logo_url}}" alt="{{salao.nome}}">
+                {{else}}
+                    <span class="painel-logo">{{salao.inicial}}</span>
+                {{/if}}
+
+                <div>
+                    <h1>{{salao.nome}}</h1>
+                    {{#if salao.local}}
+                        <p>{{salao.local}}</p>
+                    {{/if}}
+                </div>
+            </div>
+
+            <div class="painel-acoes">
+                <button type="button" id="btn-tela-cheia" class="painel-sair">Tela cheia</button>
+                <a href="/admin/logout" class="painel-sair">Sair</a>
+            </div>
+        </header>
+
+
+        <!-- ======================================================
+             DIA + BUSCA + PROFISSIONAL
+             ====================================================== -->
+        <section class="painel-card painel-dia">
+
+            <div class="dia-nav">
+                <a href="{{navegacao.anterior}}" class="dia-seta" aria-label="Dia anterior">‹</a>
+
+                <div class="dia-centro">
+                    <span class="dia-semana">{{data.dia_semana}}</span>
+                    <strong class="dia-data">{{data.fmt}}</strong>
+
+                    {{#if data.hoje}}
+                        <span class="dia-hoje">HOJE</span>
+                    {{else}}
+                        <a href="{{navegacao.hoje}}" class="dia-ir-hoje">Ir para hoje</a>
+                    {{/if}}
+                </div>
+
+                <a href="{{navegacao.proxima}}" class="dia-seta" aria-label="Próximo dia">›</a>
+            </div>
+
+            <form method="GET" action="/admin/dashboard" class="dia-busca">
+                <label for="data">Buscar dia</label>
+
+                <input
+                    type="date"
+                    id="data"
+                    name="data"
+                    value="{{data.iso}}"
+                    onchange="this.form.submit()"
+                >
+
+                {{#if filtroProfissional}}
+                    <input type="hidden" name="profissional_id" value="{{filtroProfissional}}">
+                {{/if}}
+            </form>
+
+            {{#if profissionais.length}}
+                <div class="chips">
+                    <a href="{{navegacao.todos}}" class="chip {{#if navegacao.todosAtivo}}chip-ativo{{/if}}">
+                        Todos
+                    </a>
+
+                    {{#each profissionais}}
+                        <a href="{{this.url}}" class="chip {{#if this.ativo}}chip-ativo{{/if}}">
+                            {{this.nome}}
+                        </a>
+                    {{/each}}
+                </div>
+            {{/if}}
+
+        </section>
+
+
+        <!-- ======================================================
+             FILTRO DE STATUS (desenhado pelo script)
+             ====================================================== -->
+        <div class="filtros" id="filtros" aria-label="Filtrar por status"></div>
+
+        <p class="painel-status" id="atualizacao" aria-live="polite"></p>
+
+
+        <!-- ======================================================
+             GRADE DE AGENDAMENTOS (desenhada pelo script)
+             ====================================================== -->
+        <ul class="agenda" id="agenda"></ul>
+
+        <section class="painel-card painel-vazio" id="vazio" hidden>
+            <span class="painel-vazio-icone">✂️</span>
+            <h3 id="vazio-titulo"></h3>
+            <p id="vazio-texto"></p>
+        </section>
+
+        <noscript>
+            <section class="painel-card painel-erro">
+                <p>Ative o JavaScript do navegador para ver a agenda.</p>
+            </section>
+        </noscript>
+
+        <script id="dados-iniciais" type="application/json">{{{dadosIniciais}}}</script>
+
+        <script>
+        (function () {
+            'use strict';
+
+            var INTERVALO_ATUALIZACAO_MS = 60000; 
+            var INTERVALO_RELOGIO_MS = 15000;     
+
+            var ROTULOS = {
+                pendente: 'Aguardando',
+                confirmado: 'Em atendimento',
+                concluido: 'Concluído',
+                cancelado: 'Cancelado',
+                nao_compareceu: 'Não compareceu'
+            };
+
+            var FILTROS = [
+                { id: 'abertos', rotulo: 'Em aberto', status: ['pendente', 'confirmado'] },
+                { id: 'pendente', rotulo: 'Aguardando', status: ['pendente'] },
+                { id: 'confirmado', rotulo: 'Em atendimento', status: ['confirmado'] },
+                { id: 'concluido', rotulo: 'Concluídos', status: ['concluido'] },
+                { id: 'cancelado', rotulo: 'Cancelados', status: ['cancelado'] },
+                { id: 'nao_compareceu', rotulo: 'Não compareceu', status: ['nao_compareceu'] },
+                { id: 'todos', rotulo: 'Todos', status: null }
+            ];
+
+            var FILTROS_POR_ID = {};
+            FILTROS.forEach(function (f) { FILTROS_POR_ID[f.id] = f; });
+
+            var cfg = JSON.parse(document.getElementById('dados-iniciais').textContent);
+
+            var elFiltros = document.getElementById('filtros');
+            var elAgenda = document.getElementById('agenda');
+            var elVazio = document.getElementById('vazio');
+            var elVazioTitulo = document.getElementById('vazio-titulo');
+            var elVazioTexto = document.getElementById('vazio-texto');
+            var elAtualizacao = document.getElementById('atualizacao');
+
+            var estado = {
+                data: cfg.data,
+                agendamentos: cfg.agendamentos || [],
+                filtro: lerFiltroSalvo(),
+                carregando: false,
+                offline: false,
+                ultimaAtualizacao: new Date()
+            };
+
+            function lerFiltroSalvo() {
+                try {
+                    var v = localStorage.getItem('painel.filtro');
+                    if (v && FILTROS_POR_ID[v]) return v;
+                } catch (e) {}
+                return 'abertos';
+            }
+
+            function salvarFiltro(v) {
+                try { localStorage.setItem('painel.filtro', v); } catch (e) {}
+            }
+
+            function minutosAgoraBR() {
+                var partes = new Intl.DateTimeFormat('pt-BR', {
+                    timeZone: 'America/Sao_Paulo',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                }).formatToParts(new Date());
+
+                var h = 0, m = 0, s = 0;
+                partes.forEach(function (p) {
+                    if (p.type === 'hour') h = parseInt(p.value, 10);
+                    if (p.type === 'minute') m = parseInt(p.value, 10);
+                    if (p.type === 'second') s = parseInt(p.value, 10);
+                });
+                if (h === 24) h = 0;
+                return h * 60 + m + s / 60;
+            }
+
+            function horaBR(data) {
+                return new Intl.DateTimeFormat('pt-BR', {
+                    timeZone: 'America/Sao_Paulo',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                }).format(data);
+            }
+
+            function paraMinutos(hhmm) {
+                var p = String(hhmm).split(':');
+                return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+            }
+
+            function formatarTempo(minutos) {
+                var total = Math.max(1, Math.ceil(minutos));
+                var h = Math.floor(total / 60);
+                var m = total % 60;
+                if (h && m) return h + 'h ' + m + 'min';
+                if (h) return h + 'h';
+                return m + ' min';
+            }
+
+            function situacao(ag, agora, hoje) {
+                var inicio = paraMinutos(ag.hora);
+                var fim = paraMinutos(ag.hora_fim);
+                if (fim <= inicio) fim += 1440;
+
+                if (ag.status === 'confirmado') {
+                    if (!hoje) return { classe: 'em-atendimento', dica: '', progresso: null };
+                    if (agora >= fim) return { classe: 'atrasado', dica: 'Passou do horário previsto', progresso: null };
+                    if (agora < inicio) return { classe: 'em-atendimento', dica: 'Em atendimento', progresso: 0 };
+                    return {
+                        classe: 'em-atendimento',
+                        dica: 'Termina em ' + formatarTempo(fim - agora),
+                        progresso: Math.min(100, ((agora - inicio) / (fim - inicio)) * 100)
+                    };
+                }
+
+                if (ag.status === 'pendente') {
+                    if (!hoje) return { classe: 'aguardando', dica: '', progresso: null };
+                    if (agora < inicio) return { classe: 'aguardando', dica: 'Começa em ' + formatarTempo(inicio - agora), progresso: null };
+                    if (agora < fim) return { classe: 'na-hora', dica: 'Está na hora', progresso: null };
+                    return { classe: 'atrasado', dica: 'Horário passou', progresso: null };
+                }
+
+                return { classe: ag.status, dica: '', progresso: null };
+            }
+
+            function el(tag, classe, texto) {
+                var e = document.createElement(tag);
+                if (classe) e.className = classe;
+                if (texto !== undefined && texto !== null) e.textContent = texto;
+                return e;
+            }
+
+            function itemMeta(icone, valor) {
+                var span = el('span', 'meta-item');
+                span.appendChild(el('small', 'meta-icone', icone));
+                span.appendChild(document.createTextNode(valor));
+                return span;
+            }
+
+            function criarCard(ag, sit) {
+                var li = el('li', 'ag ag-' + sit.classe);
+
+                var hora = el('div', 'ag-hora');
+                hora.appendChild(el('strong', null, ag.hora));
+                hora.appendChild(el('span', null, 'até ' + ag.hora_fim));
+
+                var corpo = el('div', 'ag-corpo');
+
+                var topo = el('div', 'ag-topo');
+                topo.appendChild(el('h3', null, ag.cliente_nome));
+                topo.appendChild(el('span', 'status status-' + ag.status, ROTULOS[ag.status] || ag.status));
+                corpo.appendChild(topo);
+
+                if (sit.dica) {
+                    corpo.appendChild(el('p', 'ag-dica', sit.dica));
+                }
+
+                var servico = el('div', 'ag-servico-badge');
+                servico.appendChild(document.createTextNode('✂️ ' + ag.servicos_texto));
+                corpo.appendChild(servico);
+
+                var meta = el('div', 'ag-meta');
+                meta.appendChild(itemMeta('👤', ag.profissional));
+                meta.appendChild(itemMeta('⏱️', ag.duracao_fmt));
+                meta.appendChild(itemMeta('💰', 'R$ ' + ag.preco_total_fmt));
+                meta.appendChild(itemMeta('📱', ag.origem_label));
+                corpo.appendChild(meta);
+
+                if (ag.observacao) {
+                    var obs = el('div', 'ag-obs');
+                    obs.appendChild(el('strong', null, '💬 Obs: '));
+                    obs.appendChild(document.createTextNode(ag.observacao));
+                    corpo.appendChild(obs);
+                }
+
+                if (sit.progresso !== null) {
+                    var trilho = el('div', 'ag-progresso');
+                    var barra = el('div', 'ag-progresso-barra');
+                    barra.style.width = sit.progresso + '%';
+                    trilho.appendChild(barra);
+                    corpo.appendChild(trilho);
+                }
+
+                li.appendChild(hora);
+                li.appendChild(corpo);
+
+                return li;
+            }
+
+            function contar(filtro) {
+                if (filtro.status === null) return estado.agendamentos.length;
+                return estado.agendamentos.filter(function (ag) {
+                    return filtro.status.indexOf(ag.status) !== -1;
+                }).length;
+            }
+
+            function desenharFiltros() {
+                elFiltros.innerHTML = '';
+                FILTROS.forEach(function (f) {
+                    var b = el('button', 'filtro' + (f.id === estado.filtro ? ' filtro-ativo' : ''));
+                    b.type = 'button';
+                    b.setAttribute('data-filtro', f.id);
+                    b.appendChild(document.createTextNode(f.rotulo));
+                    b.appendChild(el('span', 'filtro-n', String(contar(f))));
+                    elFiltros.appendChild(b);
+                });
+            }
+
+            function desenharAtualizacao() {
+                var hhmm = horaBR(estado.ultimaAtualizacao);
+                if (estado.offline) {
+                    elAtualizacao.className = 'painel-status offline';
+                    elAtualizacao.textContent = 'Sem conexão com o servidor. Mostrando dados das ' + hhmm + '. Tentando novamente…';
+                    return;
+                }
+                elAtualizacao.className = 'painel-status';
+                elAtualizacao.textContent = 'Atualizado às ' + hhmm + ' · atualiza sozinho a cada 1 minuto';
+            }
+
+            function porHorario(a, b) {
+                var d = paraMinutos(a.hora) - paraMinutos(b.hora);
+                return d !== 0 ? d : a.id - b.id;
+            }
+
+            function desenhar() {
+                var hoje = !!estado.data.hoje;
+                var agora = hoje ? minutosAgoraBR() : 0;
+                var filtro = FILTROS_POR_ID[estado.filtro] || FILTROS_POR_ID.abertos;
+
+                desenharFiltros();
+
+                var itens = estado.agendamentos
+                    .filter(function (ag) {
+                        return filtro.status === null || filtro.status.indexOf(ag.status) !== -1;
+                    })
+                    .sort(porHorario);
+
+                elAgenda.innerHTML = '';
+
+                itens.forEach(function (ag) {
+                    elAgenda.appendChild(criarCard(ag, situacao(ag, agora, hoje)));
+                });
+
+                if (itens.length === 0) {
+                    if (estado.agendamentos.length === 0) {
+                        elVazioTitulo.textContent = 'Nenhum agendamento';
+                        elVazioTexto.textContent = 'Não há horários marcados para este dia.';
+                    } else if (filtro.id === 'abertos') {
+                        elVazioTitulo.textContent = 'Tudo em dia!';
+                        elVazioTexto.textContent = 'Nenhum agendamento em aberto. Veja os outros status nos filtros acima.';
+                    } else {
+                        elVazioTitulo.textContent = 'Nenhum agendamento';
+                        elVazioTexto.textContent = 'Não há agendamentos com este status.';
+                    }
+                    elVazio.hidden = false;
+                } else {
+                    elVazio.hidden = true;
+                }
+
+                desenharAtualizacao();
+            }
+
+            function buscar() {
+                if (estado.carregando) return;
+                estado.carregando = true;
+
+                fetch(cfg.urlAjax, {
+                    headers: { Accept: 'application/json' },
+                    cache: 'no-store',
+                    credentials: 'same-origin'
+                })
+                .then(function (r) {
+                    if (r.status === 401) {
+                        window.location.href = '/admin/login';
+                        throw new Error('sessao');
+                    }
+                    if (!r.ok) throw new Error('http ' + r.status);
+                    return r.json();
+                })
+                .then(function (dados) {
+                    if (cfg.modoVivo && dados.data.iso !== estado.data.iso) {
+                        window.location.reload();
+                        return;
+                    }
+                    estado.data = dados.data;
+                    estado.agendamentos = dados.agendamentos || [];
+                    estado.ultimaAtualizacao = new Date();
+                    estado.offline = false;
+                    desenhar();
+                })
+                .catch(function (erro) {
+                    if (erro && erro.message === 'sessao') return;
+                    estado.offline = true;
+                    desenharAtualizacao();
+                })
+                .then(function () {
+                    estado.carregando = false;
+                });
+            }
+
+            elFiltros.addEventListener('click', function (e) {
+                var botao = e.target.closest('.filtro');
+                if (!botao) return;
+                estado.filtro = botao.getAttribute('data-filtro');
+                salvarFiltro(estado.filtro);
+                desenhar();
+            });
+
+            document.getElementById('btn-tela-cheia').addEventListener('click', function () {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                } else if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().catch(function () {});
+                }
+            });
+
+            function pedirTelaAcesa() {
+                if (!('wakeLock' in navigator)) return;
+                navigator.wakeLock.request('screen').catch(function () {});
+            }
+
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'visible') {
+                    pedirTelaAcesa();
+                    buscar();
+                }
+            });
+
+            desenhar();
+            pedirTelaAcesa();
+
+            setInterval(buscar, INTERVALO_ATUALIZACAO_MS);
+            setInterval(desenhar, INTERVALO_RELOGIO_MS);
+        })();
+        </script>
+
+    {{/if}}
+
 </div>

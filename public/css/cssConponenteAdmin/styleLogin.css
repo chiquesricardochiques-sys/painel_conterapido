@@ -231,3 +231,17 @@ button:active {
         margin-top: 24px;
     }
 }
+.codigo-input {
+    text-align: center;
+    letter-spacing: 0.18em;
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.login-hint {
+    text-align: center;
+    margin-top: 18px;
+    font-size: 0.85rem;
+    color: #888;
+}

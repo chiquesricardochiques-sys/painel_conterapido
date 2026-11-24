@@ -1,511 +1,726 @@
-.painel {
-  --bg: #0f1218;
-  --card: #181d26;
-  --primary: #00e5ff;
-  --danger: #ff4d6d;
-  --success: #00c853;
-  --warning: #ffab00;
-  --text: #f1f5f9;
-  --soft: #94a3b8;
-  --line: #27303f;
 
-  max-width: 1400px;
-  margin: 80px auto; /* 👈 Margem de 32px no topo e embaixo para afastar do teto da tela */
-  padding: 24px;      /* 👈 Respiro interno maior */
-  background: var(--bg);
-  border-radius: 24px;
-  color: var(--text);
+/* =========================================================
+   PAINEL ADMINISTRATIVO — HAIRLINK
+   Layout compacto e responsivo
+========================================================= */
+
+* {
   box-sizing: border-box;
-  
-  /* Sombra geral do painel flutuando na tela */
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
-.painel *,
-.painel *::before,
-.painel *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 0;
+  background: #080d13;
+  color: #e8f0f7;
+  font-family: Arial, Helvetica, sans-serif;
+}
 
-.painel a { text-decoration: none; }
+/* =========================================================
+   CONTAINER PRINCIPAL
+========================================================= */
+
+.painel {
+  width: 100%;
+  max-width: 1600px;
+  margin: 20px auto;
+  padding: 12px 18px;
+}
+
+/* =========================================================
+   CARDS
+========================================================= */
 
 .painel-card {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 14px;
-  box-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.3),
-    0 8px 24px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: #101923;
+  border: 1px solid #223344;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
 }
 
-/* ---------- TOPO ---------- */
+/* =========================================================
+   TOPO DO PAINEL
+========================================================= */
 
 .painel-topo {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 15px;
+  padding: 10px 16px;
+  min-height: 65px;
 }
 
 .painel-salao {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
 }
 
 .painel-logo {
-  flex: 0 0 52px;
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 10px;
   object-fit: cover;
-  background: var(--primary);
-  color: #000;
-  display: grid;
-  place-items: center;
-  font-weight: 900;
-  font-size: 1.3rem;
-  box-shadow: 0 4px 12px rgba(0, 229, 255, 0.2);
+  background: #123b49;
+  color: #36d6e7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  font-weight: 800;
 }
 
-.painel-salao h1 { margin: 0; font-size: 1.3rem; font-weight: 800; color: #fff; }
-.painel-salao p { margin: 3px 0 0; color: var(--soft); font-size: 0.85rem; }
+.painel-salao h1 {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.2;
+  color: #f2f7fb;
+}
 
-.painel-acoes { display: flex; gap: 10px; flex: 0 0 auto; }
+.painel-salao p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: #91a5b7;
+}
+
+.painel-acoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
 
 .painel-sair {
-  border: 1px solid var(--line);
-  cursor: pointer;
-  font: inherit;
-  color: var(--text);
+  min-height: 34px;
+  padding: 7px 13px;
+  border: 1px solid #30475b;
+  border-radius: 8px;
+  background: #172534;
+  color: #dceaf5;
+  font-size: 12px;
   font-weight: 700;
-  font-size: 0.85rem;
-  padding: 10px 16px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
-  transition: all 0.2s;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
 }
 
-.painel-sair:hover { background: rgba(255, 255, 255, 0.08); }
+.painel-sair:hover {
+  background: #20384d;
+  border-color: #36c9df;
+}
 
-/* ---------- DIA + BUSCA ---------- */
+/* =========================================================
+   LINHA DE DATA, BUSCA E PROFISSIONAIS
+========================================================= */
+
+.painel-dia {
+  padding: 10px 14px;
+}
+
+.painel-dia-linha {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Navegação de dia */
 
 .dia-nav {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 10px;
+  flex: 0 0 auto;
 }
 
 .dia-seta {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--line);
-  color: var(--primary);
-  display: grid;
-  place-items: center;
-  font-size: 1.6rem;
-  font-weight: 700;
-  transition: background 0.2s;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #30475b;
+  border-radius: 8px;
+  background: #172534;
+  color: #45d7e8;
+  font-size: 22px;
+  line-height: 1;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
 }
 
-.dia-seta:hover { background: rgba(255, 255, 255, 0.08); }
+.dia-seta:hover {
+  background: #203c4d;
+}
 
 .dia-centro {
+  min-width: 115px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
 }
 
-.dia-semana { color: var(--soft); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
-.dia-data { font-size: 1.4rem; font-weight: 900; color: #fff; }
-
-.dia-hoje {
-  color: var(--primary);
-  font-size: 0.65rem;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-  background: rgba(0, 229, 255, 0.1);
-  padding: 2px 8px;
-  border-radius: 6px;
+.dia-semana {
+  color: #8da4b8;
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.7px;
 }
 
-.dia-ir-hoje { color: var(--primary); font-size: 0.8rem; font-weight: 700; }
+.dia-data {
+  color: #f0f7fc;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.dia-hoje {
+  color: #31d6bd;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+
+.dia-ir-hoje {
+  color: #40d6e8;
+  font-size: 10px;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+/* Busca por data */
 
 .dia-busca {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
+  gap: 8px;
+  flex: 0 0 auto;
 }
 
-.dia-busca label { color: var(--soft); font-size: 0.82rem; font-weight: 700; }
+.dia-busca label {
+  color: #91a5b7;
+  font-size: 11px;
+  white-space: nowrap;
+}
 
-.dia-busca input[type="date"] {
-  flex: 1;
-  padding: 10px 14px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.2);
-  color: var(--text);
-  font-size: 0.95rem;
+.dia-busca input {
+  width: 145px;
+  height: 34px;
+  padding: 5px 8px;
+  border: 1px solid #30475b;
+  border-radius: 7px;
   outline: none;
+  background: #0b141e;
+  color: #e8f0f7;
+  font-size: 12px;
 }
 
-/* CHIPS DE PROFISSIONAIS */
+.dia-busca input:focus {
+  border-color: #32cfe2;
+}
+
+/* =========================================================
+   PROFISSIONAIS
+========================================================= */
 
 .chips {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
   overflow-x: auto;
-  padding-top: 14px;
-  margin-top: 14px;
-  border-top: 1px solid var(--line);
+  padding: 3px 0;
+  scrollbar-width: thin;
+  scrollbar-color: #31566a transparent;
 }
 
 .chip {
-  flex: 0 0 auto;
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text);
-  font-size: 0.85rem;
+  min-height: 30px;
+  padding: 6px 12px;
+  border: 1px solid #30475b;
+  border-radius: 20px;
+  background: #142231;
+  color: #a9bdce;
+  font-size: 11px;
   font-weight: 700;
-  transition: all 0.2s;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: 0.2s;
+}
+
+.chip:hover {
+  border-color: #36cfe2;
+  color: #fff;
 }
 
 .chip-ativo {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #000;
+  background: #0c4855;
+  border-color: #26c9dc;
+  color: #65e9f5;
 }
 
-/* ---------- FILTROS DE STATUS ---------- */
+/* =========================================================
+   FILTROS DE STATUS
+========================================================= */
 
 .filtros {
   display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 4px 2px 12px;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin: 8px 0 5px;
+  padding: 0 2px;
 }
 
 .filtro {
-  flex: 0 0 auto;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: 1px solid var(--line);
-  background: var(--card);
-  color: var(--text);
-  font: inherit;
-  font-size: 0.82rem;
+  justify-content: center;
+  gap: 5px;
+  min-height: 29px;
+  padding: 5px 11px;
+  border: 1px solid #263b4e;
+  border-radius: 20px;
+  background: #111e2b;
+  color: #a9bdce;
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: 0.2s;
 }
 
-.filtro-n {
-  min-width: 20px;
-  padding: 1px 6px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  font-size: 0.7rem;
-  text-align: center;
+.filtro:hover {
+  border-color: #3bc9dd;
+  color: #fff;
 }
 
 .filtro-ativo {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #000;
+  background: #10404d;
+  border-color: #27c7dc;
+  color: #66e5f2;
 }
 
-.filtro-ativo .filtro-n {
-  background: rgba(0, 0, 0, 0.2);
-  color: #000;
+.filtro-n {
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
 }
+
+/* =========================================================
+   STATUS DE ATUALIZAÇÃO
+========================================================= */
 
 .painel-status {
-  margin: 2px 0 14px;
-  text-align: center;
-  color: var(--soft);
-  font-size: 0.78rem;
+  min-height: 14px;
+  margin: 3px 2px 7px;
+  color: #71899d;
+  font-size: 10px;
 }
 
-.painel-status.offline { color: var(--danger); font-weight: 700; }
+/* =========================================================
+   AGENDA
+========================================================= */
 
-/* ---------- AGENDA / CARDS 3D PROFISSIONAIS (SEM MIMIMI) ---------- */
+.agenda {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
 
-.agenda { list-style: none; margin: 0; padding: 0; }
+/* =========================================================
+   CARD DE AGENDAMENTO
+========================================================= */
 
 .ag {
+  position: relative;
   display: flex;
   align-items: stretch;
-  background: var(--card);
-  
-  /* Efeito 3D: Borda superior iluminada + Sombra profunda em camadas */
-  border: 1px solid var(--line);
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  border-left: 1px solid rgba(255, 255, 255, 0.06);
-  
-  border-radius: 12px;
-  margin-bottom: 12px;
+  gap: 12px;
+  min-height: 75px;
+  padding: 11px 14px;
   overflow: hidden;
-  
-  box-shadow: 
-    0 1px 3px rgba(0, 0, 0, 0.4),
-    0 6px 16px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid #263b4e;
+  border-radius: 10px;
+  background: linear-gradient(110deg, #142231, #101923);
+  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.2);
+  transition: 0.2s;
 }
 
 .ag:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.5),
-    0 10px 22px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  border-color: rgba(0, 229, 255, 0.3);
+  border-color: #3b667d;
+  transform: translateY(-1px);
 }
 
-/* Bloco de Horário Esquerdo com relevo 3D */
 .ag-hora {
-  flex: 0 0 100px;
-  padding: 12px 8px;
+  width: 75px;
+  min-width: 75px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  text-align: center;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.2) 100%);
-  border-right: 1px solid var(--line);
+  justify-content: center;
+  border-right: 1px solid #2a3d4e;
+  color: #54d8e9;
+  font-size: 17px;
+  font-weight: 800;
 }
 
-.ag-hora strong { display: block; font-size: 1.15rem; font-weight: 900; color: #fff; letter-spacing: -0.02em; }
-.ag-hora span { display: block; margin-top: 2px; color: var(--soft); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
-
-/* Corpo horizontal */
-.ag-corpo { 
-  flex: 1; 
-  min-width: 0; 
-  padding: 12px 18px; 
+.ag-corpo {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  gap: 5px;
 }
 
 .ag-topo {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.ag-topo h3 {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.ag-topo strong {
+  color: #f0f6fb;
+  font-size: 14px;
 }
 
-/* Status Badges Nítidos e Sóbrios */
 .status {
-  flex: 0 0 auto;
-  padding: 3px 10px;
-  border-radius: 6px;
-  font-size: 0.68rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 9px;
+  border-radius: 20px;
+  background: #263746;
+  color: #c4d5e3;
+  font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
-.status-pendente { background: rgba(255, 171, 0, 0.12); color: var(--warning); border: 1px solid rgba(255, 171, 0, 0.2); }
-.status-confirmado { background: rgba(0, 200, 83, 0.12); color: var(--success); border: 1px solid rgba(0, 200, 83, 0.2); }
-.status-concluido { background: rgba(0, 229, 255, 0.12); color: var(--primary); border: 1px solid rgba(0, 229, 255, 0.2); }
-.status-cancelado { background: rgba(255, 77, 109, 0.12); color: var(--danger); border: 1px solid rgba(255, 77, 109, 0.2); }
-.status-nao_compareceu { background: rgba(255, 255, 255, 0.04); color: var(--soft); border: 1px solid var(--line); }
+.ag-dica {
+  color: #8fa6b9;
+  font-size: 11px;
+}
 
-.ag-dica { margin: 3px 0 0; font-size: 0.78rem; font-weight: 700; color: var(--soft); }
-
-/* Serviço com visual limpo de painel corporativo */
 .ag-servico-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin: 6px 0 4px;
-  color: var(--text);
-  font-size: 0.88rem;
-  font-weight: 700;
-  background: rgba(0, 0, 0, 0.25);
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--line);
   width: fit-content;
+  padding: 4px 8px;
+  border-radius: 5px;
+  background: #173746;
+  color: #70dce9;
+  font-size: 10px;
+  font-weight: 700;
 }
 
-/* Metadados */
-.ag-meta { 
-  display: flex; 
-  flex-wrap: wrap; 
-  gap: 4px 22px; 
-  margin-top: 6px; 
-  padding-top: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+.ag-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: #91a7b9;
+  font-size: 10px;
 }
 
 .meta-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--soft);
+  gap: 4px;
 }
 
-.meta-icone {
-  font-size: 0.85rem;
-}
-
-/* Observações mais maduras */
 .ag-obs {
-  margin-top: 6px;
-  padding: 5px 10px;
-  background: rgba(255, 171, 0, 0.06);
-  border-left: 2px solid var(--warning);
-  border-radius: 0 4px 4px 0;
-  font-size: 0.78rem;
-  color: var(--text);
-  width: fit-content;
+  padding: 6px 8px;
+  border-left: 2px solid #3b8294;
+  border-radius: 3px;
+  background: rgba(39, 112, 132, 0.1);
+  color: #a7bbc9;
+  font-size: 10px;
 }
 
-.ag-obs strong {
-  color: var(--warning);
-  font-weight: 700;
-}
-
-/* Barra de progresso 3D */
 .ag-progresso {
-  height: 5px;
-  margin-top: 8px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.4);
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  background: #34c9dc;
+  transition: width 0.3s;
 }
 
-.ag-progresso-barra {
-  height: 100%;
-  background: var(--success);
-  border-radius: 999px;
-  transition: width 1s linear;
+/* =========================================================
+   ESTADOS DOS AGENDAMENTOS
+========================================================= */
+
+.ag-na-hora {
+  border-left: 4px solid #31cba4;
 }
 
-/* Situações dinâmicas com reforço 3D nas bordas */
-.ag-na-hora { 
-  border-color: var(--warning); 
-  background: linear-gradient(90deg, rgba(255, 171, 0, 0.08) 0%, var(--card) 40%);
-}
-.ag-na-hora .ag-hora { background: var(--warning); }
-.ag-na-hora .ag-hora strong, .ag-na-hora .ag-hora span { color: #000; }
-
-.ag-em-atendimento { 
-  border-color: var(--success); 
-  background: linear-gradient(90deg, rgba(0, 200, 83, 0.08) 0%, var(--card) 40%);
-}
-.ag-em-atendimento .ag-hora { background: var(--success); }
-.ag-em-atendimento .ag-hora strong, .ag-em-atendimento .ag-hora span { color: #000; }
-
-.ag-atrasado { 
-  border-color: var(--danger); 
-  background: linear-gradient(90deg, rgba(255, 77, 109, 0.08) 0%, var(--card) 40%);
-}
-.ag-atrasado .ag-hora { background: var(--danger); }
-.ag-atrasado .ag-hora strong, .ag-atrasado .ag-hora span { color: #fff; }
-
-.ag-concluido .ag-hora { background: rgba(0, 229, 255, 0.06); }
-.ag-cancelado, .ag-nao_compareceu { opacity: 0.45; filter: grayscale(20%); }
-
-/* Vazio / Erro */
-.painel-vazio { text-align: center; padding: 28px 16px; }
-.painel-vazio-icone { font-size: 2rem; }
-.painel-vazio h3 { margin: 8px 0 2px; font-size: 1rem; color: #fff; }
-.painel-vazio p { margin: 0; color: var(--soft); font-size: 0.85rem; }
-
-.painel-erro { text-align: center; }
-.painel-erro p { color: var(--danger); font-weight: 600; margin: 0 0 12px; }
-.painel-erro-acoes { display: flex; gap: 10px; justify-content: center; }
-
-.painel-btn {
-  padding: 8px 16px;
-  border-radius: 8px;
-  background: var(--primary);
-  color: #000;
-  font-weight: 800;
-  font-size: 0.85rem;
+.ag-em-atendimento {
+  border-left: 4px solid #31c7e0;
+  background: linear-gradient(110deg, #12323c, #101923);
 }
 
-.painel-btn-sec { background: rgba(255, 255, 255, 0.05); color: var(--text); border: 1px solid var(--line); }
-
-
-/* ======================================================
-   RESPONSIVIDADE (TVs Grandes, Médias, Pequenas e Mobile)
-   ====================================================== */
-
-/* 1. TVs Grandes / Monitores 55"+ */
-@media (min-width: 1400px) {
-  .painel { max-width: 1600px; padding: 28px; }
-  .ag { margin-bottom: 14px; border-radius: 14px; }
-  .ag-hora { flex-basis: 130px; padding: 16px; }
-  .ag-hora strong { font-size: 1.5rem; }
-  .ag-corpo { padding: 16px 24px; }
-  .ag-topo h3 { font-size: 1.25rem; }
-  .ag-servico-badge { font-size: 1rem; }
-  .meta-item { font-size: 0.9rem; }
+.ag-atrasado {
+  border-left: 4px solid #f0a43b;
 }
 
-/* 2. TVs Médias (40" a 50") */
-@media (min-width: 1024px) and (max-width: 1399px) {
-  .painel { max-width: 1200px; }
-  .ag-hora { flex-basis: 110px; }
-  .ag-hora strong { font-size: 1.25rem; }
-  .ag-topo h3 { font-size: 1.1rem; }
+.ag-concluido {
+  border-left: 4px solid #3abf83;
+  opacity: 0.82;
 }
 
-/* 3. TVs Pequenas / Tablets de Parede (24" a 32") */
-@media (min-width: 600px) and (max-width: 1023px) {
-  .painel { max-width: 100%; padding: 14px; }
-  .ag-hora { flex-basis: 95px; }
-  .ag-hora strong { font-size: 1.05rem; }
-  .ag-meta { gap: 4px 16px; }
+.ag-cancelado {
+  border-left: 4px solid #e05c69;
+  opacity: 0.65;
 }
 
-/* 4. Celulares e Smartphones */
-@media (max-width: 599px) {
-  .painel { padding: 10px; border-radius: 14px; }
-  .painel-topo { flex-direction: column; align-items: stretch; }
-  .painel-acoes { justify-content: space-between; }
-  .dia-busca { flex-wrap: wrap; }
-  .dia-busca input[type="date"] { flex-basis: 100%; }
-  
-  .ag { flex-direction: row; }
-  .ag-hora { flex-basis: 75px; padding: 10px 4px; }
-  .ag-hora strong { font-size: 0.95rem; }
-  .ag-hora span { font-size: 0.6rem; }
-  .ag-corpo { padding: 10px 12px; }
-  .ag-topo h3 { font-size: 0.95rem; }
-  .ag-meta { gap: 2px 12px; }
-  .meta-item { font-size: 0.75rem; }
+.ag-nao_compareceu {
+  border-left: 4px solid #b47be8;
+}
+
+/* =========================================================
+   ESTADOS VAZIO E ERRO
+========================================================= */
+
+.painel-vazio {
+  padding: 30px 20px;
+  text-align: center;
+  color: #91a5b7;
+  font-size: 13px;
+}
+
+.painel-erro {
+  padding: 20px;
+  border-color: #783e4a;
+  background: #291923;
+  color: #ffb8c0;
+  text-align: center;
+}
+
+/* =========================================================
+   RESPONSIVIDADE — NOTEBOOK / TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+  .painel {
+    padding: 10px;
+  }
+
+  .painel-dia-linha {
+    flex-wrap: wrap;
+    gap: 10px 16px;
+  }
+
+  .chips {
+    flex-basis: 100%;
+    order: 3;
+  }
+}
+
+/* =========================================================
+   RESPONSIVIDADE — TABLET PEQUENO
+========================================================= */
+
+@media (max-width: 700px) {
+  .painel {
+    margin: 8px auto;
+    padding: 7px;
+  }
+
+  .painel-card {
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+
+  .painel-topo {
+    min-height: 55px;
+  }
+
+  .painel-salao h1 {
+    font-size: 16px;
+  }
+
+  .painel-dia-linha {
+    gap: 10px;
+  }
+
+  .dia-busca {
+    flex: 1;
+  }
+
+  .dia-busca input {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .filtros {
+    gap: 5px;
+  }
+
+  .filtro {
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+
+  .ag {
+    padding: 9px;
+    gap: 9px;
+  }
+
+  .ag-hora {
+    width: 58px;
+    min-width: 58px;
+    font-size: 15px;
+  }
+}
+
+/* =========================================================
+   RESPONSIVIDADE — CELULAR
+========================================================= */
+
+@media (max-width: 480px) {
+  .painel {
+    margin: 0 auto;
+    padding: 6px;
+  }
+
+  .painel-topo {
+    padding: 9px;
+    gap: 8px;
+  }
+
+  .painel-logo {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    font-size: 16px;
+  }
+
+  .painel-salao {
+    gap: 8px;
+  }
+
+  .painel-salao h1 {
+    font-size: 14px;
+  }
+
+  .painel-salao p {
+    font-size: 10px;
+  }
+
+  .painel-acoes {
+    gap: 5px;
+  }
+
+  .painel-sair {
+    min-height: 31px;
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  .painel-dia-linha {
+    justify-content: space-between;
+  }
+
+  .dia-nav {
+    gap: 5px;
+  }
+
+  .dia-centro {
+    min-width: 95px;
+  }
+
+  .dia-data {
+    font-size: 14px;
+  }
+
+  .dia-seta {
+    width: 28px;
+    height: 28px;
+  }
+
+  .dia-busca {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .dia-busca input {
+    max-width: 190px;
+  }
+
+  .chips {
+    width: 100%;
+  }
+
+  .ag {
+    gap: 7px;
+    padding: 8px;
+  }
+
+  .ag-hora {
+    width: 48px;
+    min-width: 48px;
+    font-size: 13px;
+  }
+
+  .ag-topo strong {
+    font-size: 12px;
+  }
+
+  .ag-meta {
+    gap: 7px;
+    font-size: 9px;
+  }
+
+  .status {
+    padding: 3px 6px;
+    font-size: 8px;
+  }
+}
+
+/* =========================================================
+   TELAS GRANDES / TV
+========================================================= */
+
+@media (min-width: 1600px) {
+  .painel {
+    max-width: 1800px;
+    padding: 14px 24px;
+  }
+
+  .ag {
+    min-height: 82px;
+    padding: 13px 18px;
+  }
+
+  .ag-hora {
+    font-size: 19px;
+  }
+
+  .ag-topo strong {
+    font-size: 15px;
+  }
 }
